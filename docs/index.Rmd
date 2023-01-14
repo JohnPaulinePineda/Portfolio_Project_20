@@ -1,5 +1,5 @@
 ---
-title: 'R : Remedial Procedures for Skewed Data with Extreme Outlier'
+title: 'R : Remedial Procedures for Skewed Data with Extreme Outliers'
 author: "John Pauline Pineda"
 date: "December 23, 2022"
 output: 
