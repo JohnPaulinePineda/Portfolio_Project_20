@@ -682,7 +682,7 @@ if (DPA_LinearlyDependentCount > 0) {
 |      **[A.1]** Train Set = 951 observations
 |      **[A.2]** Test Set = 316 observations
 | 
-| **[B]** 229 columns (variables)
+| **[B]** 5 columns (variables)
 |      **[B.1]** 1/5 response = <span style="color: #FF0000">Log_Solubility_Class</span> variable (factor)
 |             **[B.1.1]** Levels = <span style="color: #FF0000">Log_Solubility_Class=Low</span> < <span style="color: #FF0000">Log_Solubility_Class=High</span>
 |      **[B.2]** 4/5 predictors = All remaining variables (0/4 factor + 4/4 numeric)
@@ -733,8 +733,8 @@ dim(PMA_PreModelling_Test)
 | **[A]** All numeric variables demonstrated differential relationships with the <span style="color: #FF0000">Log_Solubility_Class</span> response variable:
 |      **[A.1]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
 |      **[A.2]** <span style="color: #FF0000">NumCarbon</span> variable (numeric)
-|      **[A.2]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
-|      **[A.2]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|      **[A.3]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[A.4]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 ```{r section_1.4, warning=FALSE, message=FALSE}
 ##################################
