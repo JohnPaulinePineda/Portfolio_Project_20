@@ -1162,6 +1162,8 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
+| [Yeo-Johnson Transformation](https://academic.oup.com/biomet/article-abstract/87/4/954/232908?redirectedFrom=fulltext) applies a new family of distributions that can be used without restrictions, extending many of the good properties of the Box-Cox power family. The method has the ability to transform both positive and negative values by inflating low variance data and deflating high variance data to create a more uniform data set. 
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Yeo-Johnson transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -2875,6 +2877,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Article]** [What is a Yeo-Johnson Power Transformation?](https://readysignal.com/what-is-a-yeo-johnson-power-transformation/) by Ready Signal Team
 | **[Article]** [Box-Cox Transformation in Excel (Step-by-Step)](https://www.statology.org/box-cox-transformation-excel/) by Statology Team
 | **[Article]** [Box-Cox Transformation](https://www.spcforexcel.com/knowledge/basic-statistics/box-cox-transformation) by SPC For Excel Team
+| **[Article]** [Box-Cox Transformation](https://encyclopediaofmath.org/wiki/Box-Cox_transformation) by Encyclopedia of Math Team
 | **[Article]** [The Box-Cox Transformation: What It Is and How to Use It](https://leanscape.io/the-box-cox-transformation-what-it-is-and-how-to-use-it/) by Leanscape Team
 | **[Article]** [Inverse Hyperbolic Sine](https://mathworld.wolfram.com/InverseHyperbolicSine.html) by Wolfram Mathworld Team
 | **[Article]** [Spot-Check Classification Machine Learning Algorithms in Python with scikit-learn](https://machinelearningmastery.com/spot-check-classification-machine-learning-algorithms-python-scikit-learn/) by Jason Brownlee
