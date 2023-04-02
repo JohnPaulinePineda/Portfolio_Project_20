@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 |
 | This document presents a non-exhaustive list of remedial procedures applied for data with high skewness and extreme outliers using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>.    
 |
+| Data transformation is the application of mathematical modifications to the values of a variable which changes and improves the shape of a distribution or relationship. A transformed scale may be used to reduce distributional skewness and produce approximately equal spreads minimizing outliers which are assumed by most parametric statistical tests and modelling procedures. The methods applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**stats**</mark> and <mark style="background-color: #CCECFF">**caret**</mark> package) attempt to explore various data transformation strategies for non-normal distributions in readying the data for analysis procedures requiring improved characteristics of normality, homogeneity of variance or both. 
+|
 ##  1.1 Sample Data
 |
 | The <mark style="background-color: #EEEEEE;color: #FF0000">**Solubility**</mark>  dataset from the  <mark style="background-color: #CCECFF">**AppliedPredictiveModeling**</mark> package was used for this illustrated example. The original numeric response was transformed to simulate a dichotomous categorical variable. Other original predictors were removed from the dataset leaving only a subset of numeric predictors used during the analysis. 
