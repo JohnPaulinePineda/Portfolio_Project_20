@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 |
 | This document presents a non-exhaustive list of remedial procedures applied for data with high skewness and extreme outliers using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>.    
 |
-| Data transformation is the application of mathematical modifications to the values of a variable which changes and improves the shape of a distribution or relationship. A transformed scale may be used to reduce distributional skewness and produce approximately equal spreads minimizing outliers which are assumed by most parametric statistical tests and modelling procedures. The methods applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**stats**</mark> and <mark style="background-color: #CCECFF">**caret**</mark> package) attempt to explore various data transformation strategies for non-normal distributions in readying the data for analysis procedures requiring improved characteristics of normality, homogeneity of variance or both. 
+| Data transformation is the application of mathematical modifications to the values of a variable which changes and improves the shape of a distribution or relationship. A transformed scale may be used to reduce distributional skewness and produce approximately equal spreads minimizing outliers which are assumed by most parametric statistical tests and modelling procedures. The methods applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**stats**</mark> and <mark style="background-color: #CCECFF">**caret**</mark> package) attempt to explore various data transformation strategies for non-normal distributions in readying the data for analysis procedures requiring improved characteristics of normality, homogeneity of variance and additivity of relationships. 
 |
 ##  1.1 Sample Data
 |
@@ -957,6 +957,8 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 ###  1.5.2 Logistic Regression With Box-Cox Transformation (LR_BCT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Box-Cox Transformation](https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1964.tb00553.x) applies a family of power transformations such that the modified values are a monotonic function of the observations over some admissible range and indexed by an optimal parameter lambda. The process involves determining the value of lambda which would result to the highest correlation between the Box-Cox-transformed values and the z-scores of the observations' ordered indices. The original data set is recomputed through the same power transformations given the optimized lambda value.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Box-Cox transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
@@ -2873,7 +2875,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Article]** [What is a Yeo-Johnson Power Transformation?](https://readysignal.com/what-is-a-yeo-johnson-power-transformation/) by Ready Signal Team
 | **[Article]** [Box-Cox Transformation in Excel (Step-by-Step)](https://www.statology.org/box-cox-transformation-excel/) by Statology Team
 | **[Article]** [Box-Cox Transformation](https://www.spcforexcel.com/knowledge/basic-statistics/box-cox-transformation) by SPC For Excel Team
-| **[Article]** [The Box-Cox Transformation: What It Is and How to Use It](https://machinelearningmastery.com/types-of-classification-in-machine-learning/) by Reagan Pannell
+| **[Article]** [The Box-Cox Transformation: What It Is and How to Use It](https://leanscape.io/the-box-cox-transformation-what-it-is-and-how-to-use-it/) by Leanscape Team
 | **[Article]** [Inverse Hyperbolic Sine](https://mathworld.wolfram.com/InverseHyperbolicSine.html) by Wolfram Mathworld Team
 | **[Article]** [Spot-Check Classification Machine Learning Algorithms in Python with scikit-learn](https://machinelearningmastery.com/spot-check-classification-machine-learning-algorithms-python-scikit-learn/) by Jason Brownlee
 | **[Article]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
@@ -2886,7 +2888,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Publication]** [Notes on the Use of Data Transformations](https://scholarworks.umass.edu/pare/vol8/iss1/6/) by Jason Osborne (Practical Assessment, Research, and Evaluation)
 | **[Publication]** [Winsorization for Identifying and Treating Outliers in Business Surveys](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Ray Chambers, Philip Kokic, Paul Smith and Marie Cruddas (Proceedings in the Second International Conference on Establishment Survey)
 | **[Publication]** [The Inverse Hyperbolic Sine Transformation and Retransformed Marginal Effects](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Edward Norton (National Bureau of Economic Research)
-| **[Publication]** [An Application of the Inverse Hyperbolic Sine Transformation—A Note](https://link.springer.com/article/10.1023/A:1012593022758) by Mingliang Zhang, John Fortney, John Tilford and Kathryn Rost (Health Services and Outcomes Research Methodology)
+| **[Publication]** [An Application of the Inverse Hyperbolic Sine Transformation — A Note](https://link.springer.com/article/10.1023/A:1012593022758) by Mingliang Zhang, John Fortney, John Tilford and Kathryn Rost (Health Services and Outcomes Research Methodology)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
 | **[Course]** [Regression Methods](https://online.stat.psu.edu/stat501/) by Penn State Eberly College of Science
 | **[Course]** [Applied Regression Analysis](https://online.stat.psu.edu/stat462/) by Penn State Eberly College of Science
