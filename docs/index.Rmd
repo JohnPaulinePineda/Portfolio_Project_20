@@ -2872,6 +2872,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Article]** [Box-Cox Transformation in Excel (Step-by-Step)](https://www.statology.org/box-cox-transformation-excel/) by Statology Team
 | **[Article]** [Box-Cox Transformation](https://www.spcforexcel.com/knowledge/basic-statistics/box-cox-transformation) by SPC For Excel Team
 | **[Article]** [The Box-Cox Transformation: What It Is and How to Use It](https://machinelearningmastery.com/types-of-classification-in-machine-learning/) by Reagan Pannell
+| **[Article]** [Inverse Hyperbolic Sine](https://mathworld.wolfram.com/InverseHyperbolicSine.html) by Wolfram Mathworld Team
 | **[Article]** [Spot-Check Classification Machine Learning Algorithms in Python with scikit-learn](https://machinelearningmastery.com/spot-check-classification-machine-learning-algorithms-python-scikit-learn/) by Jason Brownlee
 | **[Article]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
 | **[Article]** [Generalized Linear Model](https://support.bccvl.org.au/support/solutions/articles/6000083213-generalized-linear-model) by BCCVL Team
@@ -2882,6 +2883,8 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Publication]** [Spatial Sign Preprocessing: A Simple Way To Impart Moderate Robustness to Multivariate Estimators](https://pubs.acs.org/doi/10.1021/ci050498u) by Sven Serneels, Evert De Nolf and Pierre Van Espen (Journal of Chemical Information and Modeling)
 | **[Publication]** [Notes on the Use of Data Transformations](https://scholarworks.umass.edu/pare/vol8/iss1/6/) by Jason Osborne (Practical Assessment, Research, and Evaluation)
 | **[Publication]** [Winsorization for Identifying and Treating Outliers in Business Surveys](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Ray Chambers, Philip Kokic, Paul Smith and Marie Cruddas (Proceedings in the Second International Conference on Establishment Survey)
+| **[Publication]** [The Inverse Hyperbolic Sine Transformation and Retransformed Marginal Effects](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Edward Norton (National Bureau of Economic Research)
+| **[Publication]** [An Application of the Inverse Hyperbolic Sine Transformation—A Note](https://link.springer.com/article/10.1023/A:1012593022758) by Mingliang Zhang, John Fortney, John Tilford and Kathryn Rost (Health Services and Outcomes Research Methodology)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
 | **[Course]** [Regression Methods](https://online.stat.psu.edu/stat501/) by Penn State Eberly College of Science
 | **[Course]** [Applied Regression Analysis](https://online.stat.psu.edu/stat462/) by Penn State Eberly College of Science
