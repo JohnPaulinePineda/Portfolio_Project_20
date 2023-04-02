@@ -770,6 +770,8 @@ featurePlot(x = EDA.Predictors.Numeric,
 ## 1.5 Predictive Model Development
 ###  1.5.1 Logistic Regression Without Skewness and Outlier Treatment (LR_REF)
 |
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package without any treatments applied for both data skewness and outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -951,6 +953,8 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 ```
 
 ###  1.5.2 Logistic Regression With Box-Cox Transformation (LR_BCT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Box-Cox transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
@@ -1152,6 +1156,8 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 
 ###  1.5.3 Logistic Regression With Yeo-Johnson Transformation (LR_YJT)
 |
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Yeo-Johnson transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -1340,6 +1346,8 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 
 ###  1.5.4 Logistic Regression With Exponential Transformation (LR_ET)
 |
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with exponential transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -1527,6 +1535,8 @@ LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
 ```
 
 ###  1.5.5 Logistic Regression With Inverse Hyperbolic Sine Transformation (LR_IHST)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with inverse hyperbolic sine transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
@@ -1725,6 +1735,8 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 ```
 
 ###  1.5.6 Logistic Regression With Base-10 Logarithm Transformation (LR_LOG10T)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with base-10 logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
@@ -1927,6 +1939,8 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 ```
 
 ###  1.5.7 Logistic Regression With Natural Logarithm Transformation (LR_LNT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with natural logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
@@ -2131,6 +2145,8 @@ LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
 
 ###  1.5.8 Logistic Regression With Square Root Transformation (LR_SRT)
 |
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with square root transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -2330,6 +2346,8 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 ```
 
 ###  1.5.9 Logistic Regression With Outlier Winsorization Treatment (LR_WT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Winsorization transformation applied to treat data outliers but no any treatment applied for data skewness. 
 |
@@ -2536,6 +2554,8 @@ LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
 ```
 
 ###  1.5.10 Logistic Regression With Outlier Spatial Sign Treatment (LR_SST)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Spatial Sign treatment applied to treat data outliers but no any treatment applied for data skewness. 
 |
