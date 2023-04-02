@@ -2355,6 +2355,8 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
+| [Winsorization treatment](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) replaces the extreme values of a data set in order to limit the effect of the outliers on the calculations or the results obtained by using such data. An iteration of such method is an 80% winsorization which replaces the top and bottom 10% data with the values at the 10th and 90th percentiles, respectively.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Winsorization transformation applied to treat data outliers but no any treatment applied for data skewness. 
 |
 | **[B]** The model does not contain any hyperparameter.
