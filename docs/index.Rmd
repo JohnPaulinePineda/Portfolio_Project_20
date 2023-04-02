@@ -2881,6 +2881,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
 | **[Publication]** [A New Family of Power Transformations to Improve Normality or Symmetry](https://academic.oup.com/biomet/article-abstract/87/4/954/232908?redirectedFrom=fulltext) by In-Kwon Yeo and Richard Johnson (Biometrika)
 | **[Publication]** [Spatial Sign Preprocessing: A Simple Way To Impart Moderate Robustness to Multivariate Estimators](https://pubs.acs.org/doi/10.1021/ci050498u) by Sven Serneels, Evert De Nolf and Pierre Van Espen (Journal of Chemical Information and Modeling)
 | **[Publication]** [Notes on the Use of Data Transformations](https://scholarworks.umass.edu/pare/vol8/iss1/6/) by Jason Osborne (Practical Assessment, Research, and Evaluation)
+| **[Publication]** [Winsorization for Identifying and Treating Outliers in Business Surveys](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Ray Chambers, Philip Kokic, Paul Smith and Marie Cruddas (Proceedings in the Second International Conference on Establishment Survey)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
 | **[Course]** [Regression Methods](https://online.stat.psu.edu/stat501/) by Penn State Eberly College of Science
 | **[Course]** [Applied Regression Analysis](https://online.stat.psu.edu/stat462/) by Penn State Eberly College of Science
