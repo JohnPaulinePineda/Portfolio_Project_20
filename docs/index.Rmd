@@ -1354,6 +1354,8 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
+| [Exponential Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its exponentiated form.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with exponential transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -1746,6 +1748,8 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
+| [Base-10 Logarithm Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its logarithm function-applied form using a base equal to 10. As the logarithm of zero or any negative number is undefined, a constant must be added to move the minimum value of the distribution preferably to 1.
+|
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with base-10 logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -1949,6 +1953,8 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 ###  1.5.7 Logistic Regression With Natural Logarithm Transformation (LR_LNT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Natural Logarithm Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its natural logarithm function-applied form using a base equal to the constant e (2.7182818). As the logarithm of zero or any negative number is undefined, a constant must be added to move the minimum value of the distribution preferably to 1.
 |
 | **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with natural logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
 |
