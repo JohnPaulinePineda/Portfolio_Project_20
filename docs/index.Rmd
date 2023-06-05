@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 ```
 # **1. Table of Contents**
 |
-| This document presents a non-exhaustive list of remedial procedures applied for data with high skewness and extreme outliers using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>.    
+| This project explores different remedial procedures for handling skewed data with extreme outliers for classification using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Using a **Logistic Regression** model structure, methods applied in the analysis to address data distribution skewness and outlying points included the **Box-Cox Transformation**, **Yeo-Johnson Transformation**, **Exponential Transformation**, **Inverse Hyperbolic Sine Transformation**, **Base-10 Logarithm Transformation**, **Natural Logarithm Transformation**, **Square Root Transformation**, **Outlier Winsorization Treatment** and **Outlier Spatial Sign Treatment**. The resulting predictions derived from the candidate models applying various remedial procedures were evaluated in terms of their discrimination power using the receiver operating characteristic (ROC) curve area under the curve (AUC) metric. The ROC AUC values were compared to that of the baseline model which made use of data without any form of data transformation and treatment.
 |
 | Data transformation is the application of mathematical modifications to the values of a variable which changes and improves its distributional characteristics. A transformed scale may be used to reduce distributional skewness and produce approximately equal spreads minimizing outliers which better support standardized model fit indices and effect size estimates assumed by most parametric statistical tests and modelling procedures. The methods applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**stats**</mark> and <mark style="background-color: #CCECFF">**caret**</mark> package) attempt to explore various data transformation strategies for non-normal distributions in readying the data for analysis procedures requiring improved characteristics of normality, homogeneity of variance and additivity of relationships. 
 |
@@ -2768,17 +2768,17 @@ LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
 | Model performance comparison:
 |
 | **[A]** The transformation for skewed data generally performed better for models which are sensitive to deviations against the normality assumption (i.e. logistic regression) as compared to treatment for extreme outliers. 
-|      **[A.1]** LR: Logistic Regression (<mark style="background-color: #CCECFF">**stats**</mark> package)
-|             **[A.1.1]** LR_REF: Cross-Validation ROC Curve AUC = 0.87475, Test ROC Curve AUC = 0.88447 
-|             **[A.1.2]** LR_BCT: Cross-Validation ROC Curve AUC = 0.88878, Test ROC Curve AUC = 0.89676
-|             **[A.1.3]** LR_YJT: Cross-Validation ROC Curve AUC = 0.88070, Test ROC Curve AUC = 0.89061 
-|             **[A.1.4]** LR_ET: Cross-Validation ROC Curve AUC = 0.88053, Test ROC Curve AUC = 0.89013
-|             **[A.1.5]** LR_IHST: Cross-Validation ROC Curve AUC = 0.87107, Test ROC Curve AUC = 0.87998 
-|             **[A.1.6]** LR_LOG10T: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 
-|             **[A.1.7]** LR_LNT: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 8 
-|             **[A.1.8]** LR_SRT: Cross-Validation ROC Curve AUC = 0.88441, Test ROC Curve AUC = 0.89461 
-|             **[A.1.9]** LR_WT: Cross-Validation ROC Curve AUC = 0.87428, Test ROC Curve AUC = 0.88916
-|             **[A.1.10]** LR_SST: Cross-Validation ROC Curve AUC = 0.86608, Test ROC Curve AUC = 0.88786
+|      **[A.1]** **LR: Logistic Regression** (<mark style="background-color: #CCECFF">**stats**</mark> package)
+|             **[A.1.1]** **LR_REF (Without Skewness and Outlier Treatment)**: Cross-Validation ROC Curve AUC = 0.87475, Test ROC Curve AUC = 0.88447 
+|             **[A.1.2]** **LR_BCT (With Box-Cox Transformation)**: Cross-Validation ROC Curve AUC = 0.88878, Test ROC Curve AUC = 0.89676
+|             **[A.1.3]** **LR_YJT (With Yeo-Johnson Transformation)**: Cross-Validation ROC Curve AUC = 0.88070, Test ROC Curve AUC = 0.89061 
+|             **[A.1.4]** **LR_ET (With Exponential Transformation)**: Cross-Validation ROC Curve AUC = 0.88053, Test ROC Curve AUC = 0.89013
+|             **[A.1.5]** **LR_IHST (With Inverse Hyperbolic Sine Transformation)**: Cross-Validation ROC Curve AUC = 0.87107, Test ROC Curve AUC = 0.87998 
+|             **[A.1.6]** **LR_LOG10T (With Base-10 Logarithm Transformation)**: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 
+|             **[A.1.7]** **LR_LNT (With Natural Logarithm Transformation)**: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 8 
+|             **[A.1.8]** **LR_SRT (With Square Root Transformation)**: Cross-Validation ROC Curve AUC = 0.88441, Test ROC Curve AUC = 0.89461 
+|             **[A.1.9]** **LR_WT (With Outlier Winsorization Treatment)**: Cross-Validation ROC Curve AUC = 0.87428, Test ROC Curve AUC = 0.88916
+|             **[A.1.10]** **LR_SST (With Outlier Spatial Sign Treatment)**: Cross-Validation ROC Curve AUC = 0.86608, Test ROC Curve AUC = 0.88786
 |
 ```{r section_1.5.16, warning=FALSE, message=FALSE}
 ##################################
