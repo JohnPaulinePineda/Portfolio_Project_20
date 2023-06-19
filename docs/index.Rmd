@@ -36,6 +36,9 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 |      **[B.2]** 4/5 predictors = All remaining variables (0/4 factor + 4/4 numeric)
 |     
 | 
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.1, warning=FALSE, message=FALSE}
 ##################################
 # Loading R libraries
@@ -136,6 +139,9 @@ PDA <- Solubility_Train
   row.names=NULL)
 )
 ```
+
+</details>
+
 ##  1.2 Data Quality Assessment
 |
 | Data quality assessment:
@@ -149,6 +155,10 @@ PDA <- Solubility_Train
 | **[D]** High skewness observed for 1 variables with Skewness>3 or Skewness<(-3).
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.2, warning=FALSE, message=FALSE}
 ##################################
 # Loading dataset
@@ -365,6 +375,9 @@ if (length(names(DQA.Predictors.Numeric))==0) {
 }
 
 ```
+
+</details>
+
 ##  1.3 Data Preprocessing
 
 ###  1.3.1 Outlier
@@ -377,6 +390,10 @@ if (length(names(DQA.Predictors.Numeric))==0) {
 |      **[A.3]** <span style="color: #FF0000">NumNonHAtoms</span> variable (15 outliers detected)
 |      **[A.4]** <span style="color: #FF0000">NumCarbon</span> variable (35 outliers detected)
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.3.1, warning=FALSE, message=FALSE, fig.width=15, fig.height=3}
 ##################################
 # Loading dataset
@@ -427,6 +444,9 @@ print(paste0(NumericPredictorWithOutlierCount, " numeric variable(s) were noted 
 dim(DPA.Predictors.Numeric)
 
 ```
+
+</details>
+
 ###  1.3.2 Zero and Near-Zero Variance
 |
 | Zero and near-zero variance data assessment:
@@ -435,6 +455,10 @@ dim(DPA.Predictors.Numeric)
 |
 | **[B]** No low variance noted for any variables using a preprocessing summary from the <mark style="background-color: #CCECFF">**caret**</mark> package. The <span style="color: #0000FF">nearZeroVar</span> method using both the <span style="color: #0000FF">freqCut</span> and <span style="color: #0000FF">uniqueCut</span> criteria set at 95/5 and 10, respectively, were applied on the dataset.
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.3.2, warning=FALSE, message=FALSE}
 ##################################
 # Loading dataset
@@ -495,12 +519,19 @@ if ((nrow(DPA_LowVariance[DPA_LowVariance$nzv,]))==0){
 }
 
 ```
+
+</details>
+
 ###  1.3.3 Collinearity
 |
 | High collinearity data assessment:
 |
 | **[A]** No high correlation > 95% were noted for any 2 variable pairs as confirmed using the preprocessing summaries from the <mark style="background-color: #CCECFF">**caret**</mark> and <mark style="background-color: #CCECFF">**lares**</mark> packages.
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.3.3, warning=FALSE, message=FALSE}
 ##################################
 # Loading dataset
@@ -595,12 +626,18 @@ if (DPA_HighlyCorrelatedCount > 0) {
 
 ```
 
+</details>
+
 ###  1.3.4 Linear Dependencies
 |
 | Linear dependency data assessment:
 |
 | **[A]** No linear dependencies noted for any subsets of variables using the preprocessing summary from the <mark style="background-color: #CCECFF">**caret**</mark> package applying the <span style="color: #0000FF">findLinearCombos</span> method which utilizes the QR decomposition of a matrix to enumerate sets of linear combinations (if they exist). 
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.3.4, warning=FALSE, message=FALSE}
 ##################################
 # Loading dataset
@@ -676,6 +713,8 @@ if (DPA_LinearlyDependentCount > 0) {
 
 ```
 
+</details>
+
 ###  1.3.5 Pre-Processed Dataset
 |
 | Preliminary dataset assessment:
@@ -692,6 +731,10 @@ if (DPA_LinearlyDependentCount > 0) {
 | **[C]** Pre-processing actions applied:
 |      **[C.1]** No predictors removed due to zero or near-zero variance, high correlation or linear dependencies 
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.3.5, warning=FALSE, message=FALSE}
 ##################################
 # Creating the pre-modelling
@@ -728,6 +771,9 @@ PMA_PreModelling_Test <- Solubility_Test
 dim(PMA_PreModelling_Test)
 
 ```
+
+</details>
+
 ## 1.4 Data Exploration
 |
 | Exploratory data analysis:
@@ -738,6 +784,10 @@ dim(PMA_PreModelling_Test)
 |      **[A.3]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
 |      **[A.4]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.4, warning=FALSE, message=FALSE}
 ##################################
 # Loading dataset
@@ -769,6 +819,8 @@ featurePlot(x = EDA.Predictors.Numeric,
 
 ```
 
+</details>
+
 ## 1.5 Predictive Model Development
 ###  1.5.1 Logistic Regression Without Skewness and Outlier Treatment (LR_REF)
 |
@@ -790,6 +842,10 @@ featurePlot(x = EDA.Predictors.Numeric,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.88447
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.1, warning=FALSE, message=FALSE}
 ##################################
 # Creating a local object
@@ -954,6 +1010,8 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 
 ```
 
+</details>
+
 ###  1.5.2 Logistic Regression With Box-Cox Transformation (LR_BCT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -976,6 +1034,10 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89676
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.2, warning=FALSE, message=FALSE}
 ##################################
 # Adding an offset to adjust the
@@ -1158,6 +1220,8 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 
 ```
 
+</details>
+
 ###  1.5.3 Logistic Regression With Yeo-Johnson Transformation (LR_YJT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -1180,6 +1244,10 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89061
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.3, warning=FALSE, message=FALSE}
 ##################################
 # Creating a local object
@@ -1350,6 +1418,8 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 
 ```
 
+</details>
+
 ###  1.5.4 Logistic Regression With Exponential Transformation (LR_ET)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -1372,6 +1442,10 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89013
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.4, warning=FALSE, message=FALSE}
 ##################################
 # Creating a local object
@@ -1542,6 +1616,8 @@ LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
 
 ```
 
+</details>
+
 ###  1.5.5 Logistic Regression With Inverse Hyperbolic Sine Transformation (LR_IHST)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -1564,6 +1640,10 @@ LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.87998
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.5, warning=FALSE, message=FALSE}
 ##################################
 # Applying inverse hyperbolic sine function
@@ -1744,6 +1824,8 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 
 ```
 
+</details>
+
 ###  1.5.6 Logistic Regression With Base-10 Logarithm Transformation (LR_LOG10T)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -1766,6 +1848,10 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89882
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.6, warning=FALSE, message=FALSE}
 ##################################
 # Applying numerical adjustments
@@ -1950,6 +2036,8 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 
 ```
 
+</details>
+
 ###  1.5.7 Logistic Regression With Natural Logarithm Transformation (LR_LNT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -1972,6 +2060,10 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89882
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.7, warning=FALSE, message=FALSE}
 ##################################
 # Applying numerical adjustments
@@ -2156,6 +2248,7 @@ LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
 
 ```
 
+</details>
 
 ###  1.5.8 Logistic Regression With Square Root Transformation (LR_SRT)
 |
@@ -2179,6 +2272,10 @@ LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.89882
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.8, warning=FALSE, message=FALSE}
 ##################################
 # Applying square root function
@@ -2361,6 +2458,8 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 
 ```
 
+</details>
+
 ###  1.5.9 Logistic Regression With Outlier Winsorization Treatment (LR_WT)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -2383,6 +2482,10 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.88916
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.9, warning=FALSE, message=FALSE}
 ##################################
 # Applying winsorization function
@@ -2571,6 +2674,8 @@ LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
 
 ```
 
+</details>
+
 ###  1.5.10 Logistic Regression With Outlier Spatial Sign Treatment (LR_SST)
 |
 | [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
@@ -2593,6 +2698,10 @@ LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
 | **[E]** The independent test model performance of the final model is summarized as follows:
 |      **[E.1]** ROC Curve AUC = 0.88786
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.10, warning=FALSE, message=FALSE}
 ##################################
 # Creating a local object
@@ -2763,6 +2872,8 @@ LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
 
 ```
 
+</details>
+
 ##  1.6 Model Evaluation Summary
 |
 | Model performance comparison:
@@ -2780,6 +2891,10 @@ LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
 |             **[A.1.9]** **LR_WT (With Outlier Winsorization Treatment)**: Cross-Validation ROC Curve AUC = 0.87428, Test ROC Curve AUC = 0.88916
 |             **[A.1.10]** **LR_SST (With Outlier Spatial Sign Treatment)**: Cross-Validation ROC Curve AUC = 0.86608, Test ROC Curve AUC = 0.88786
 |
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
 ```{r section_1.5.16, warning=FALSE, message=FALSE}
 ##################################
 # Consolidating all evaluation results
@@ -2836,6 +2951,8 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
                            cex = 2))
 
 ```
+
+</details>
 
 # **2. References**
 |
