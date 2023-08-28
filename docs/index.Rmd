@@ -832,7 +832,7 @@ featurePlot(x = EDA.Predictors.Numeric,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.87475
+|      **[C.2]** AUROC = 0.87475
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -840,7 +840,7 @@ featurePlot(x = EDA.Predictors.Numeric,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.88447
+|      **[E.1]** AUROC = 0.88447
 |
 |
 
@@ -1024,7 +1024,7 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.88878
+|      **[C.2]** AUROC = 0.88878
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -1032,7 +1032,7 @@ LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89676
+|      **[E.1]** AUROC = 0.89676
 |
 |
 
@@ -1234,7 +1234,7 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.88070
+|      **[C.2]** AUROC = 0.88070
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -1242,7 +1242,7 @@ LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89061
+|      **[E.1]** AUROC = 0.89061
 |
 |
 
@@ -1432,7 +1432,7 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.88053
+|      **[C.2]** AUROC = 0.88053
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -1440,7 +1440,7 @@ LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89013
+|      **[E.1]** AUROC = 0.89013
 |
 |
 
@@ -1630,7 +1630,7 @@ LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.87107
+|      **[C.2]** AUROC = 0.87107
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -1638,7 +1638,7 @@ LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.87998
+|      **[E.1]** AUROC = 0.87998
 |
 |
 
@@ -1838,7 +1838,7 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.89192
+|      **[C.2]** AUROC = 0.89192
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -1846,7 +1846,7 @@ LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89882
+|      **[E.1]** AUROC = 0.89882
 |
 |
 
@@ -2050,7 +2050,7 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.89192
+|      **[C.2]** AUROC = 0.89192
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -2058,7 +2058,7 @@ LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89882
+|      **[E.1]** AUROC = 0.89882
 |
 |
 
@@ -2262,7 +2262,7 @@ LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.88441
+|      **[C.2]** AUROC = 0.88441
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -2270,7 +2270,7 @@ LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.89882
+|      **[E.1]** AUROC = 0.89882
 |
 |
 
@@ -2472,7 +2472,7 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.87428
+|      **[C.2]** AUROC = 0.87428
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -2480,7 +2480,7 @@ LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.88916
+|      **[E.1]** AUROC = 0.88916
 |
 |
 
@@ -2688,7 +2688,7 @@ LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
 |
 | **[C]** The cross-validated model performance of the final model is summarized as follows:
 |      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
-|      **[C.2]** ROC Curve AUC = 0.86608
+|      **[C.2]** AUROC = 0.86608
 |
 | **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
 |      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
@@ -2696,7 +2696,7 @@ LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
 |      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
 |
 | **[E]** The independent test model performance of the final model is summarized as follows:
-|      **[E.1]** ROC Curve AUC = 0.88786
+|      **[E.1]** AUROC = 0.88786
 |
 |
 
@@ -2880,16 +2880,16 @@ LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
 |
 | **[A]** The transformation for skewed data generally performed better for models which are sensitive to deviations against the normality assumption (i.e. logistic regression) as compared to treatment for extreme outliers. 
 |      **[A.1]** **LR: Logistic Regression** (<mark style="background-color: #CCECFF">**stats**</mark> package)
-|             **[A.1.1]** **LR_REF (Without Skewness and Outlier Treatment)**: Cross-Validation ROC Curve AUC = 0.87475, Test ROC Curve AUC = 0.88447 
-|             **[A.1.2]** **LR_BCT (With Box-Cox Transformation)**: Cross-Validation ROC Curve AUC = 0.88878, Test ROC Curve AUC = 0.89676
-|             **[A.1.3]** **LR_YJT (With Yeo-Johnson Transformation)**: Cross-Validation ROC Curve AUC = 0.88070, Test ROC Curve AUC = 0.89061 
-|             **[A.1.4]** **LR_ET (With Exponential Transformation)**: Cross-Validation ROC Curve AUC = 0.88053, Test ROC Curve AUC = 0.89013
-|             **[A.1.5]** **LR_IHST (With Inverse Hyperbolic Sine Transformation)**: Cross-Validation ROC Curve AUC = 0.87107, Test ROC Curve AUC = 0.87998 
-|             **[A.1.6]** **LR_LOG10T (With Base-10 Logarithm Transformation)**: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 
-|             **[A.1.7]** **LR_LNT (With Natural Logarithm Transformation)**: Cross-Validation ROC Curve AUC = 0.89192, Test ROC Curve AUC = 0.89882 8 
-|             **[A.1.8]** **LR_SRT (With Square Root Transformation)**: Cross-Validation ROC Curve AUC = 0.88441, Test ROC Curve AUC = 0.89461 
-|             **[A.1.9]** **LR_WT (With Outlier Winsorization Treatment)**: Cross-Validation ROC Curve AUC = 0.87428, Test ROC Curve AUC = 0.88916
-|             **[A.1.10]** **LR_SST (With Outlier Spatial Sign Treatment)**: Cross-Validation ROC Curve AUC = 0.86608, Test ROC Curve AUC = 0.88786
+|             **[A.1.1]** **LR_REF (Without Skewness and Outlier Treatment)**: Cross-Validation AUROC = 0.87475, Test AUROC = 0.88447 
+|             **[A.1.2]** **LR_BCT (With Box-Cox Transformation)**: Cross-Validation AUROC = 0.88878, Test AUROC = 0.89676
+|             **[A.1.3]** **LR_YJT (With Yeo-Johnson Transformation)**: Cross-Validation AUROC = 0.88070, Test AUROC = 0.89061 
+|             **[A.1.4]** **LR_ET (With Exponential Transformation)**: Cross-Validation AUROC = 0.88053, Test AUROC = 0.89013
+|             **[A.1.5]** **LR_IHST (With Inverse Hyperbolic Sine Transformation)**: Cross-Validation AUROC = 0.87107, Test AUROC = 0.87998 
+|             **[A.1.6]** **LR_LOG10T (With Base-10 Logarithm Transformation)**: Cross-Validation AUROC = 0.89192, Test AUROC = 0.89882 
+|             **[A.1.7]** **LR_LNT (With Natural Logarithm Transformation)**: Cross-Validation AUROC = 0.89192, Test AUROC = 0.89882 8 
+|             **[A.1.8]** **LR_SRT (With Square Root Transformation)**: Cross-Validation AUROC = 0.88441, Test AUROC = 0.89461 
+|             **[A.1.9]** **LR_WT (With Outlier Winsorization Treatment)**: Cross-Validation AUROC = 0.87428, Test AUROC = 0.88916
+|             **[A.1.10]** **LR_SST (With Outlier Spatial Sign Treatment)**: Cross-Validation AUROC = 0.86608, Test AUROC = 0.88786
 |
 |
 
@@ -2899,7 +2899,7 @@ LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
 ##################################
 # Consolidating all evaluation results
 # for the train and test sets
-# using the ROC Curve AUC metric
+# using the AUROC metric
 ##################################
 Model <- c('LR_REF','LR_BCT','LR_YJT','LR_ET','LR_IHST','LR_LOG10T','LR_LNT','LR_SRT','LR_WT','LR_SST',
            'LR_REF','LR_BCT','LR_YJT','LR_ET','LR_IHST','LR_LOG10T','LR_LNT','LR_SRT','LR_WT','LR_SST')
@@ -2942,7 +2942,7 @@ print(ROCCurveAUC_Summary, row.names=FALSE)
                            groups = Set,
                            main = "Classification Model Performance Comparison",
                            ylab = "Model",
-                           xlab = "ROC Curve AUC",
+                           xlab = "AUROC",
                            auto.key = list(adj = 1),
                            type=c("p", "h"),
                            origin = 0,
