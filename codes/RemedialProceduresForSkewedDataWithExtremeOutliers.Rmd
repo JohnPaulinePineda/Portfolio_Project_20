@@ -1,0 +1,3041 @@
+---
+title: 'Data Preprocessing : Remedial Procedures for Skewed Data with Extreme Outliers'
+author: "John Pauline Pineda"
+date: "December 23, 2022"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: readable
+    highlight: tango
+    css: doc.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
+```
+# **1. Table of Contents**
+|
+| This project explores different remedial procedures for handling skewed data with extreme outliers for classification using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Using a **Logistic Regression** model structure, methods applied in the analysis to address data distribution skewness and outlying points included the **Box-Cox Transformation**, **Yeo-Johnson Transformation**, **Exponential Transformation**, **Inverse Hyperbolic Sine Transformation**, **Base-10 Logarithm Transformation**, **Natural Logarithm Transformation**, **Square Root Transformation**, **Outlier Winsorization Treatment** and **Outlier Spatial Sign Treatment**. The resulting predictions derived from the candidate models applying various remedial procedures were evaluated in terms of their discrimination power using the area under the receiver operating characteristic curve (AUROC) metric. The AUROC values were compared to that of the baseline model which made use of data without any form of data transformation and treatment. All results were consolidated in a [<span style="color: #FF0000">**Summary**</span>](#summary) presented at the end of the document.
+|
+| Data transformation is the application of mathematical modifications to the values of a variable which changes and improves its distributional characteristics. A transformed scale may be used to reduce distributional skewness and produce approximately equal spreads minimizing outliers which better support standardized model fit indices and effect size estimates assumed by most parametric statistical tests and modelling procedures. The methods applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**stats**</mark> and <mark style="background-color: #CCECFF">**caret**</mark> package) attempt to explore various data transformation strategies for non-normal distributions in readying the data for analysis procedures requiring improved characteristics of normality, homogeneity of variance and additivity of relationships. 
+|
+##  1.1 Sample Data
+|
+| The <mark style="background-color: #EEEEEE;color: #FF0000">**Solubility**</mark>  dataset from the  <mark style="background-color: #CCECFF">**AppliedPredictiveModeling**</mark> package was used for this illustrated example. The original numeric response was transformed to simulate a dichotomous categorical variable. Other original predictors were removed from the dataset leaving only a subset of numeric predictors used during the analysis. 
+|
+| Preliminary dataset assessment:
+|
+| **[A]** 1267 rows (observations)
+|      **[A.1]** Train Set = 951 observations
+|      **[A.2]** Test Set = 316 observations
+| 
+| **[B]** 5 columns (variables)
+|      **[B.1]** 1/5 response = <span style="color: #FF0000">Log_Solubility_Class</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">Log_Solubility_Class=Low</span> < <span style="color: #FF0000">Log_Solubility_Class=High</span>
+|      **[B.2]** 4/5 predictors = All remaining variables (4/4 numeric)
+|     
+| 
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.1, warning=FALSE, message=FALSE}
+##################################
+# Loading R libraries
+##################################
+library(AppliedPredictiveModeling)
+library(caret)
+library(rpart)
+library(lattice)
+library(dplyr)
+library(tidyr)
+library(moments)
+library(skimr)
+library(RANN)
+library(pls)
+library(corrplot)
+library(tidyverse)
+library(lares)
+library(DMwR)
+library(gridExtra)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(stats)
+library(nnet)
+library(elasticnet)
+library(earth)
+library(party)
+library(kernlab)
+library(randomForest)
+library(Cubist)
+library(pROC)
+library(mda)
+library(klaR)
+library(pamr)
+
+##################################
+# Loading source and
+# formulating the train set
+##################################
+data(solubility)
+Solubility_Train <- as.data.frame(cbind(solTrainY,solTrainX))
+Solubility_Test  <- as.data.frame(cbind(solTestY,solTestX))
+
+##################################
+# Applying dichotomization and
+# defining the response variable
+##################################
+Solubility_Train$Log_Solubility_Class <- ifelse(Solubility_Train$solTrainY<mean(Solubility_Train$solTrainY),
+                                                "Low","High")
+Solubility_Train$Log_Solubility_Class <- factor(Solubility_Train$Log_Solubility_Class,
+                                                levels = c("Low","High"))
+Solubility_Test$Log_Solubility_Class <- ifelse(Solubility_Test$solTestY<mean(Solubility_Train$solTrainY),
+                                                "Low","High")
+Solubility_Test$Log_Solubility_Class <- factor(Solubility_Test$Log_Solubility_Class,
+                                                levels = c("Low","High"))
+
+Solubility_Train$solTrainY <- NULL
+Solubility_Test$solTestY <- NULL
+
+##################################
+# Filtering in a subset of variables
+# for the analysis
+##################################
+Solubility_Train <- Solubility_Train[,c("HydrophilicFactor",
+                                        "NumAtoms",
+                                        "NumNonHAtoms",
+                                        "NumCarbon",
+                                        "Log_Solubility_Class")]
+
+Solubility_Test <- Solubility_Test[,c("HydrophilicFactor",
+                                      "NumAtoms",
+                                      "NumNonHAtoms",
+                                      "NumCarbon",
+                                      "Log_Solubility_Class")]
+
+##################################
+# Performing a general exploration of the train set
+##################################
+dim(Solubility_Train)
+str(Solubility_Train)
+summary(Solubility_Train)
+
+##################################
+# Performing a general exploration of the test set
+##################################
+dim(Solubility_Test)
+str(Solubility_Test)
+summary(Solubility_Test)
+
+##################################
+# Formulating a data type assessment summary
+##################################
+PDA <- Solubility_Train
+(PDA.Summary <- data.frame(
+  Column.Index=c(1:length(names(PDA))),
+  Column.Name= names(PDA), 
+  Column.Type=sapply(PDA, function(x) class(x)), 
+  row.names=NULL)
+)
+```
+
+</details>
+
+##  1.2 Data Quality Assessment
+|
+| **[A]** No missing observations noted for any variable.
+|
+| **[B]** No low variance observed for any variable with First.Second.Mode.Ratio>5.
+|
+| **[C]** No low variance observed for any variable with Unique.Count.Ratio<0.01.
+|
+| **[D]** High skewness observed for 1 variables with Skewness>3 or Skewness<(-3).
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.2, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DQA <- Solubility_Train
+
+##################################
+# Formulating an overall data quality assessment summary
+##################################
+(DQA.Summary <- data.frame(
+  Column.Index=c(1:length(names(DQA))),
+  Column.Name= names(DQA), 
+  Column.Type=sapply(DQA, function(x) class(x)), 
+  Row.Count=sapply(DQA, function(x) nrow(DQA)),
+  NA.Count=sapply(DQA,function(x)sum(is.na(x))),
+  Fill.Rate=sapply(DQA,function(x)format(round((sum(!is.na(x))/nrow(DQA)),3),nsmall=3)),
+  row.names=NULL)
+)
+
+##################################
+# Listing all predictors
+##################################
+DQA.Predictors <- DQA[,!names(DQA) %in% c("Log_Solubility_Class")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DQA.Predictors.Numeric <- DQA.Predictors[,sapply(DQA.Predictors, is.numeric)]
+
+if (length(names(DQA.Predictors.Numeric))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Numeric))),
+               " numeric predictor variable(s)."))
+} else {
+  print("There are no numeric predictor variables.")
+}
+
+##################################
+# Listing all factor predictors
+##################################
+DQA.Predictors.Factor <- DQA.Predictors[,sapply(DQA.Predictors, is.factor)]
+
+if (length(names(DQA.Predictors.Factor))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Factor))),
+               " factor predictor variable(s)."))
+} else {
+  print("There are no factor predictor variables.")
+}
+
+##################################
+# Formulating a data quality assessment summary for factor predictors
+##################################
+if (length(names(DQA.Predictors.Factor))>0) {
+  
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = x[!(x %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return("x"),
+           return(usm[tabsm == max(tabsm)]))
+  }
+  
+  (DQA.Predictors.Factor.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Factor), 
+  Column.Type=sapply(DQA.Predictors.Factor, function(x) class(x)), 
+  Unique.Count=sapply(DQA.Predictors.Factor, function(x) length(unique(x))),
+  First.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(FirstModes(x)[1])),
+  Second.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(SecondModes(x)[1])),
+  First.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Factor)),3), nsmall=3)),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  row.names=NULL)
+  )
+  
+} 
+
+##################################
+# Formulating a data quality assessment summary for numeric predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))>0) {
+  
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = na.omit(x)[!(na.omit(x) %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return(0.00001),
+           return(usm[tabsm == max(tabsm)]))
+  }
+  
+  (DQA.Predictors.Numeric.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Numeric), 
+  Column.Type=sapply(DQA.Predictors.Numeric, function(x) class(x)), 
+  Unique.Count=sapply(DQA.Predictors.Numeric, function(x) length(unique(x))),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Numeric)),3), nsmall=3)),
+  First.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((FirstModes(x)[1]),3),nsmall=3)),
+  Second.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((SecondModes(x)[1]),3),nsmall=3)),
+  First.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  Minimum=sapply(DQA.Predictors.Numeric, function(x) format(round(min(x,na.rm = TRUE),3), nsmall=3)),
+  Mean=sapply(DQA.Predictors.Numeric, function(x) format(round(mean(x,na.rm = TRUE),3), nsmall=3)),
+  Median=sapply(DQA.Predictors.Numeric, function(x) format(round(median(x,na.rm = TRUE),3), nsmall=3)),
+  Maximum=sapply(DQA.Predictors.Numeric, function(x) format(round(max(x,na.rm = TRUE),3), nsmall=3)),
+  Skewness=sapply(DQA.Predictors.Numeric, function(x) format(round(skewness(x,na.rm = TRUE),3), nsmall=3)),
+  Kurtosis=sapply(DQA.Predictors.Numeric, function(x) format(round(kurtosis(x,na.rm = TRUE),3), nsmall=3)),
+  Percentile25th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.25,na.rm = TRUE),3), nsmall=3)),
+  Percentile75th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.75,na.rm = TRUE),3), nsmall=3)),
+  row.names=NULL)
+  )  
+  
+}
+
+##################################
+# Identifying potential data quality issues
+##################################
+
+##################################
+# Checking for missing observations
+##################################
+if ((nrow(DQA.Summary[DQA.Summary$NA.Count>0,]))>0){
+  print(paste0("Missing observations noted for ",
+               (nrow(DQA.Summary[DQA.Summary$NA.Count>0,])),
+               " variable(s) with NA.Count>0 and Fill.Rate<1.0."))
+  DQA.Summary[DQA.Summary$NA.Count>0,]
+} else {
+  print("No missing observations noted.")
+}
+
+##################################
+# Checking for zero or near-zero variance predictors
+##################################
+if (length(names(DQA.Predictors.Factor))==0) {
+  print("No factor predictors noted.")
+} else if (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])),
+               " factor variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance factor predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])),
+               " numeric variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance numeric predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])),
+               " numeric variable(s) with Unique.Count.Ratio<0.01."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,]
+} else {
+  print("No low variance numeric predictors due to low unique count ratio noted.")
+}
+
+##################################
+# Checking for skewed predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])>0){
+  print(paste0("High skewness observed for ",
+  (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])),
+  " numeric variable(s) with Skewness>3 or Skewness<(-3)."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                 as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),]
+} else {
+  print("No skewed numeric predictors noted.")
+}
+
+```
+
+</details>
+
+##  1.3 Data Preprocessing
+
+###  1.3.1 Outlier
+|
+| **[A]** Outliers noted for 4 variables  with the numeric data visualized through a boxplot including observations classified as suspected outliers using the IQR criterion. The IQR criterion means that all observations above the (75th percentile + 1.5 x IQR) or below the (25th percentile - 1.5 x IQR) are suspected outliers, where IQR is the difference between the third quartile (75th percentile) and first quartile (25th percentile). Outlier treatment for numerical stability remains optional depending on potential model requirements for the subsequent steps.
+|      **[A.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (53 outliers detected)
+|      **[A.2]** <span style="color: #FF0000">NumAtoms</span> variable (44 outliers detected)
+|      **[A.3]** <span style="color: #FF0000">NumNonHAtoms</span> variable (15 outliers detected)
+|      **[A.4]** <span style="color: #FF0000">NumCarbon</span> variable (35 outliers detected)
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.1, warning=FALSE, message=FALSE, fig.width=15, fig.height=3}
+##################################
+# Loading dataset
+##################################
+DPA <- Solubility_Train
+
+##################################
+# Listing all predictors
+##################################
+DPA.Predictors <- DPA[,!names(DPA) %in% c("Log_Solubility_Class")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DPA.Predictors.Numeric <- DPA.Predictors[,sapply(DPA.Predictors, is.numeric)]
+
+##################################
+# Identifying outliers for the numeric predictors
+##################################
+OutlierCountList <- c()
+
+for (i in 1:ncol(DPA.Predictors.Numeric)) {
+  Outliers <- boxplot.stats(DPA.Predictors.Numeric[,i])$out
+  OutlierCount <- length(Outliers)
+  OutlierCountList <- append(OutlierCountList,OutlierCount)
+  OutlierIndices <- which(DPA.Predictors.Numeric[,i] %in% c(Outliers))
+  boxplot(DPA.Predictors.Numeric[,i],
+          ylab = names(DPA.Predictors.Numeric)[i],
+          main = names(DPA.Predictors.Numeric)[i],
+          horizontal=TRUE)
+  mtext(paste0(OutlierCount, " Outlier(s) Detected"))
+}
+
+OutlierCountSummary <- as.data.frame(cbind(names(DPA.Predictors.Numeric),(OutlierCountList)))
+names(OutlierCountSummary) <- c("NumericPredictors","OutlierCount")
+OutlierCountSummary$OutlierCount <- as.numeric(as.character(OutlierCountSummary$OutlierCount))
+NumericPredictorWithOutlierCount <- nrow(OutlierCountSummary[OutlierCountSummary$OutlierCount>0,])
+print(paste0(NumericPredictorWithOutlierCount, " numeric variable(s) were noted with outlier(s)." ))
+
+##################################
+# Gathering descriptive statistics
+##################################
+(DPA_Skimmed <- skim(DPA.Predictors.Numeric))
+
+###################################
+# Verifying the data dimensions
+###################################
+dim(DPA.Predictors.Numeric)
+
+```
+
+</details>
+
+###  1.3.2 Zero and Near-Zero Variance
+|
+| **[A]** Low variance noted for any variable from the previous data quality assessment using a lower threshold.
+|
+| **[B]** No low variance noted for any variables using a preprocessing summary from the <mark style="background-color: #CCECFF">**caret**</mark> package. The <span style="color: #0000FF">nearZeroVar</span> method using both the <span style="color: #0000FF">freqCut</span> and <span style="color: #0000FF">uniqueCut</span> criteria set at 95/5 and 10, respectively, were applied on the dataset.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.2, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DPA <- Solubility_Train
+
+##################################
+# Gathering descriptive statistics
+##################################
+(DPA_Skimmed <- skim(DPA))
+
+##################################
+# Identifying columns with low variance
+###################################
+DPA_LowVariance <- nearZeroVar(DPA,
+                               freqCut = 95/5,
+                               uniqueCut = 10,
+                               saveMetrics= TRUE)
+(DPA_LowVariance[DPA_LowVariance$nzv,])
+
+if ((nrow(DPA_LowVariance[DPA_LowVariance$nzv,]))==0){
+
+  print("No low variance predictors noted.")
+
+} else {
+
+  print(paste0("Low variance observed for ",
+               (nrow(DPA_LowVariance[DPA_LowVariance$nzv,])),
+               " numeric variable(s) with First.Second.Mode.Ratio>4 and Unique.Count.Ratio<0.10."))
+
+  DPA_LowVarianceForRemoval <- (nrow(DPA_LowVariance[DPA_LowVariance$nzv,]))
+
+  print(paste0("Low variance can be resolved by removing ",
+               (nrow(DPA_LowVariance[DPA_LowVariance$nzv,])),
+               " numeric variable(s)."))
+
+  for (j in 1:DPA_LowVarianceForRemoval) {
+  DPA_LowVarianceRemovedVariable <- rownames(DPA_LowVariance[DPA_LowVariance$nzv,])[j]
+  print(paste0("Variable ",
+               j,
+               " for removal: ",
+               DPA_LowVarianceRemovedVariable))
+  }
+
+  DPA %>%
+  skim() %>%
+  dplyr::filter(skim_variable %in% rownames(DPA_LowVariance[DPA_LowVariance$nzv,]))
+
+  ##################################
+  # Filtering out columns with low variance
+  #################################
+  DPA_ExcludedLowVariance <- DPA[,!names(DPA) %in% rownames(DPA_LowVariance[DPA_LowVariance$nzv,])]
+
+  ##################################
+  # Gathering descriptive statistics
+  ##################################
+  (DPA_ExcludedLowVariance_Skimmed <- skim(DPA_ExcludedLowVariance))
+}
+
+```
+
+</details>
+
+###  1.3.3 Collinearity
+|
+| **[A]** No high correlation > 95% were noted for any 2 variable pairs as confirmed using the preprocessing summaries from the <mark style="background-color: #CCECFF">**caret**</mark> and <mark style="background-color: #CCECFF">**lares**</mark> packages.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.3, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DPA <- Solubility_Train
+
+##################################
+# Listing all predictors
+##################################
+DPA.Predictors <- DPA[,!names(DPA) %in% c("Log_Solubility_Class")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DPA.Predictors.Numeric <- DPA.Predictors[,sapply(DPA.Predictors, is.numeric)]
+
+##################################
+# Visualizing pairwise correlation between predictors
+##################################
+DPA_CorrelationTest <- cor.mtest(DPA.Predictors.Numeric,
+                       method = "pearson",
+                       conf.level = .95)
+
+corrplot(cor(DPA.Predictors.Numeric,
+             method = "pearson",
+             use="pairwise.complete.obs"),
+         method = "circle",
+         type = "upper",
+         order = "original",
+         tl.col = "black",
+         tl.cex = 0.75,
+         tl.srt = 90,
+         sig.level = 0.05,
+         p.mat = DPA_CorrelationTest$p,
+         insig = "blank")
+
+
+
+##################################
+# Identifying the highly correlated variables
+##################################
+DPA_Correlation <-  cor(DPA.Predictors.Numeric,
+                        method = "pearson",
+                        use="pairwise.complete.obs")
+(DPA_HighlyCorrelatedCount <- sum(abs(DPA_Correlation[upper.tri(DPA_Correlation)]) > 0.95))
+
+if (DPA_HighlyCorrelatedCount == 0) {
+  print("No highly correlated predictors noted.")
+} else {
+  print(paste0("High correlation observed for ",
+               (DPA_HighlyCorrelatedCount),
+               " pairs of numeric variable(s) with Correlation.Coefficient>0.95."))
+
+  (DPA_HighlyCorrelatedPairs <- corr_cross(DPA.Predictors.Numeric,
+  max_pvalue = 0.05,
+  top = DPA_HighlyCorrelatedCount,
+  rm.na = TRUE,
+  grid = FALSE
+))
+
+}
+
+
+if (DPA_HighlyCorrelatedCount > 0) {
+  DPA_HighlyCorrelated <- findCorrelation(DPA_Correlation, cutoff = 0.95)
+
+  (DPA_HighlyCorrelatedForRemoval <- length(DPA_HighlyCorrelated))
+
+  print(paste0("High correlation can be resolved by removing ",
+               (DPA_HighlyCorrelatedForRemoval),
+               " numeric variable(s)."))
+
+  for (j in 1:DPA_HighlyCorrelatedForRemoval) {
+  DPA_HighlyCorrelatedRemovedVariable <- colnames(DPA.Predictors.Numeric)[DPA_HighlyCorrelated[j]]
+  print(paste0("Variable ",
+               j,
+               " for removal: ",
+               DPA_HighlyCorrelatedRemovedVariable))
+  }
+
+  ##################################
+  # Filtering out columns with high correlation
+  #################################
+  DPA_ExcludedHighCorrelation <- DPA[,-DPA_HighlyCorrelated]
+
+  ##################################
+  # Gathering descriptive statistics
+  ##################################
+  (DPA_ExcludedHighCorrelation_Skimmed <- skim(DPA_ExcludedHighCorrelation))
+
+}
+
+```
+
+</details>
+
+###  1.3.4 Linear Dependencies
+|
+| **[A]** No linear dependencies noted for any subsets of variables using the preprocessing summary from the <mark style="background-color: #CCECFF">**caret**</mark> package applying the <span style="color: #0000FF">findLinearCombos</span> method which utilizes the QR decomposition of a matrix to enumerate sets of linear combinations (if they exist). 
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.4, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DPA <- Solubility_Train
+
+##################################
+# Listing all predictors
+##################################
+DPA.Predictors <- DPA[,!names(DPA) %in% c("Log_Solubility_Class")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DPA.Predictors.Numeric <- DPA.Predictors[,sapply(DPA.Predictors, is.numeric)]
+
+##################################
+# Identifying the linearly dependent variables
+##################################
+DPA_LinearlyDependent <- findLinearCombos(DPA.Predictors.Numeric)
+
+(DPA_LinearlyDependentCount <- length(DPA_LinearlyDependent$linearCombos))
+
+if (DPA_LinearlyDependentCount == 0) {
+  print("No linearly dependent predictors noted.")
+} else {
+  print(paste0("Linear dependency observed for ",
+               (DPA_LinearlyDependentCount),
+               " subset(s) of numeric variable(s)."))
+
+  for (i in 1:DPA_LinearlyDependentCount) {
+    DPA_LinearlyDependentSubset <- colnames(DPA.Predictors.Numeric)[DPA_LinearlyDependent$linearCombos[[i]]]
+    print(paste0("Linear dependent variable(s) for subset ",
+                 i,
+                 " include: ",
+                 DPA_LinearlyDependentSubset))
+  }
+
+}
+
+##################################
+# Identifying the linearly dependent variables for removal
+##################################
+
+if (DPA_LinearlyDependentCount > 0) {
+  DPA_LinearlyDependent <- findLinearCombos(DPA.Predictors.Numeric)
+
+  DPA_LinearlyDependentForRemoval <- length(DPA_LinearlyDependent$remove)
+
+  print(paste0("Linear dependency can be resolved by removing ",
+               (DPA_LinearlyDependentForRemoval),
+               " numeric variable(s)."))
+
+  for (j in 1:DPA_LinearlyDependentForRemoval) {
+  DPA_LinearlyDependentRemovedVariable <- colnames(DPA.Predictors.Numeric)[DPA_LinearlyDependent$remove[j]]
+  print(paste0("Variable ",
+               j,
+               " for removal: ",
+               DPA_LinearlyDependentRemovedVariable))
+  }
+
+  ##################################
+  # Filtering out columns with linear dependency
+  #################################
+  DPA_ExcludedLinearlyDependent <- DPA[,-DPA_LinearlyDependent$remove]
+
+  ##################################
+  # Gathering descriptive statistics
+  ##################################
+  (DPA_ExcludedLinearlyDependent_Skimmed <- skim(DPA_ExcludedLinearlyDependent))
+
+}
+
+```
+
+</details>
+
+###  1.3.5 Pre-Processed Dataset
+|
+| **[A]** 1267 rows (observations)
+|      **[A.1]** Train Set = 951 observations
+|      **[A.2]** Test Set = 316 observations
+| 
+| **[B]** 5 columns (variables)
+|      **[B.1]** 1/5 response = <span style="color: #FF0000">Log_Solubility_Class</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">Log_Solubility_Class=Low</span> < <span style="color: #FF0000">Log_Solubility_Class=High</span>
+|      **[B.2]** 4/5 predictors = All remaining variables (4/4 numeric)
+| 
+| **[C]** Pre-processing actions applied:
+|      **[C.1]** No predictors removed due to zero or near-zero variance, high correlation or linear dependencies 
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.5, warning=FALSE, message=FALSE}
+##################################
+# Creating the pre-modelling
+# train set
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+
+##################################
+# Gathering descriptive statistics
+##################################
+(PMA_PreModelling_Train_Skimmed <- skim(PMA_PreModelling_Train))
+
+###################################
+# Verifying the data dimensions
+# for the train set
+###################################
+dim(PMA_PreModelling_Train)
+
+##################################
+# Creating the pre-modelling
+# test set
+##################################
+PMA_PreModelling_Test <- Solubility_Test
+
+##################################
+# Gathering descriptive statistics
+##################################
+(PMA_PreModelling_Test_Skimmed <- skim(PMA_PreModelling_Test))
+
+###################################
+# Verifying the data dimensions
+# for the test set
+###################################
+dim(PMA_PreModelling_Test)
+
+```
+
+</details>
+
+## 1.4 Data Exploration
+|
+| **[A]** All numeric variables demonstrated differential relationships with the <span style="color: #FF0000">Log_Solubility_Class</span> response variable:
+|      **[A.1]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[A.2]** <span style="color: #FF0000">NumCarbon</span> variable (numeric)
+|      **[A.3]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[A.4]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.4, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+EDA <- PMA_PreModelling_Train
+
+##################################
+# Listing all predictors
+##################################
+EDA.Predictors <- EDA[,!names(EDA) %in% c("Log_Solubility_Class")]
+
+##################################
+# Listing all numeric predictors
+##################################
+EDA.Predictors.Numeric <- EDA.Predictors[,sapply(EDA.Predictors, is.numeric)]
+ncol(EDA.Predictors.Numeric)
+names(EDA.Predictors.Numeric)
+
+##################################
+# Formulating the box plots
+##################################
+featurePlot(x = EDA.Predictors.Numeric,
+            y = EDA$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|")
+
+```
+
+</details>
+
+## 1.5 Predictive Model Development
+###  1.5.1 Logistic Regression Without Skewness and Outlier Treatment (LR_REF)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package without any treatments applied for both data skewness and outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.87475
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.88447
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.1, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)],
+            y = PMA_PreModelling_Train_LR$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_REF Train Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)], 
+            y = PMA_PreModelling_Train_LR$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_REF Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_Tune <- train(x = PMA_PreModelling_Train_LR[,!names(PMA_PreModelling_Train_LR) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_Tune
+
+LR_Tune$finalModel
+
+LR_Tune$results
+
+(LR_Train_ROCCurveAUC <- LR_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_VarImp <- varImp(LR_Tune, scale = TRUE)
+plot(LR_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+##################################
+# Formulating the box plots
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)],
+            y = PMA_PreModelling_Test_LR$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_REF Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)], 
+            y = PMA_PreModelling_Test_LR$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_REF Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_Test <- data.frame(LR_Observed = PMA_PreModelling_Test_LR$Log_Solubility_Class,
+                      LR_Predicted = predict(LR_Tune,
+                      PMA_PreModelling_Test_LR[,!names(PMA_PreModelling_Test_LR) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_Test_ROC <- roc(response = LR_Test$LR_Observed,
+             predictor = LR_Test$LR_Predicted.High,
+             levels = rev(levels(LR_Test$LR_Observed)))
+
+(LR_Test_ROCCurveAUC <- auc(LR_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.2 Logistic Regression With Box-Cox Transformation (LR_BCT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Box-Cox Transformation](https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1964.tb00553.x) applies a family of power transformations such that the modified values are a monotonic function of the observations over some admissible range and indexed by an optimal parameter lambda. The process involves determining the value of lambda which would result to the highest correlation between the Box-Cox-transformed values and the z-scores of the observations' ordered indices. The original data set is recomputed through the same power transformations given the optimized lambda value. The method is restricted to positive values only.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Box-Cox transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.88878
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89676
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.2, warning=FALSE, message=FALSE}
+##################################
+# Adding an offset to adjust the
+# range of values to only positive values
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  PMA_PreModelling_Train[,i] <- PMA_PreModelling_Train[,i]+1
+}
+
+for (i in 1:(ncol(PMA_PreModelling_Test)-1)){
+  PMA_PreModelling_Test[,i] <- PMA_PreModelling_Test[,i]+1
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+Transform_BoxCox <- preProcess(PMA_PreModelling_Train_LR, method = c("BoxCox"))
+PMA_PreModelling_Train_LR_BCT <- predict(Transform_BoxCox, PMA_PreModelling_Train_LR.Numeric)
+PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_BCT[,sapply(PMA_PreModelling_Train_LR_BCT, is.numeric)],
+            y = PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_BCT Train Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Train_LR_BCT[,sapply(PMA_PreModelling_Train_LR_BCT, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_BCT Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_BCT_Tune <- train(x = PMA_PreModelling_Train_LR_BCT[,!names(PMA_PreModelling_Train_LR_BCT) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_BCT$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_BCT_Tune
+
+LR_BCT_Tune$finalModel
+
+LR_BCT_Tune$results
+
+(LR_BCT_Train_ROCCurveAUC <- LR_BCT_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_BCT_VarImp <- varImp(LR_BCT_Tune, scale = TRUE)
+plot(LR_BCT_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_BCT <- predict(Transform_BoxCox, PMA_PreModelling_Test_LR.Numeric)
+PMA_PreModelling_Test_LR_BCT$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_BCT[,sapply(PMA_PreModelling_Test_LR_BCT, is.numeric)],
+            y = PMA_PreModelling_Test_LR_BCT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_BCT Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_BCT[,sapply(PMA_PreModelling_Test_LR_BCT, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_BCT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_BCT Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_BCT$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_BCT_Test <- data.frame(LR_BCT_Observed = PMA_PreModelling_Test_LR_BCT$Log_Solubility_Class,
+                      LR_BCT_Predicted = predict(LR_BCT_Tune,
+                      PMA_PreModelling_Test_LR_BCT[,!names(PMA_PreModelling_Test_LR_BCT) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_BCT_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_BCT_Test_ROC <- roc(response = LR_BCT_Test$LR_BCT_Observed,
+             predictor = LR_BCT_Test$LR_BCT_Predicted.High,
+             levels = rev(levels(LR_BCT_Test$LR_BCT_Observed)))
+
+(LR_BCT_Test_ROCCurveAUC <- auc(LR_BCT_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.3 Logistic Regression With Yeo-Johnson Transformation (LR_YJT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Yeo-Johnson Transformation](https://academic.oup.com/biomet/article-abstract/87/4/954/232908?redirectedFrom=fulltext) applies a new family of distributions that can be used without restrictions, extending many of the good properties of the Box-Cox power family. Similar to the Box-Cox transformation, the method also estimates the optimal value of lambda but has the ability to transform both positive and negative values by inflating low variance data and deflating high variance data to create a more uniform data set. While there are no restrictions in terms of the applicable values, the interpretability of the transformed values is more diminished as compared to the other methods. 
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Yeo-Johnson transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.88070
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89061
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.3, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+Transform_YeoJohnson <- preProcess(PMA_PreModelling_Train_LR, method = c("YeoJohnson"))
+PMA_PreModelling_Train_LR_YJT <- predict(Transform_YeoJohnson, PMA_PreModelling_Train_LR.Numeric)
+PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_YJT[,sapply(PMA_PreModelling_Train_LR_YJT, is.numeric)],
+            y = PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_YJT Train Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Train_LR_YJT[,sapply(PMA_PreModelling_Train_LR_YJT, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_YJT Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_YJT_Tune <- train(x = PMA_PreModelling_Train_LR_YJT[,!names(PMA_PreModelling_Train_LR_YJT) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_YJT$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_YJT_Tune
+
+LR_YJT_Tune$finalModel
+
+LR_YJT_Tune$results
+
+(LR_YJT_Train_ROCCurveAUC <- LR_YJT_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_YJT_VarImp <- varImp(LR_YJT_Tune, scale = TRUE)
+plot(LR_YJT_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_YJT <- predict(Transform_YeoJohnson, PMA_PreModelling_Test_LR.Numeric)
+PMA_PreModelling_Test_LR_YJT$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_YJT[,sapply(PMA_PreModelling_Test_LR_YJT, is.numeric)],
+            y = PMA_PreModelling_Test_LR_YJT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_YJT Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_YJT[,sapply(PMA_PreModelling_Test_LR_YJT, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_YJT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_YJT Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_YJT$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_YJT_Test <- data.frame(LR_YJT_Observed = PMA_PreModelling_Test_LR_YJT$Log_Solubility_Class,
+                      LR_YJT_Predicted = predict(LR_YJT_Tune,
+                      PMA_PreModelling_Test_LR_YJT[,!names(PMA_PreModelling_Test_LR_YJT) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_YJT_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_YJT_Test_ROC <- roc(response = LR_YJT_Test$LR_YJT_Observed,
+             predictor = LR_YJT_Test$LR_YJT_Predicted.High,
+             levels = rev(levels(LR_YJT_Test$LR_YJT_Observed)))
+
+(LR_YJT_Test_ROCCurveAUC <- auc(LR_YJT_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.4 Logistic Regression With Exponential Transformation (LR_ET)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Exponential Transformation](https://rss.onlinelibrary.wiley.com/doi/abs/10.2307/2988129) applies a new family of exponential distributions that can be used without restrictions, providing a good alternative for other power transformation families. While there are no restrictions in terms of the applicable values, the method's effectiveness is sensitive to the quality of the data as it needs to assume a common mean and estimate the transformation parameter by directly maximizing the likelihood.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with exponential transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.88053
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89013
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.4, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+Transform_Exponential <- preProcess(PMA_PreModelling_Train_LR, method = c("expoTrans"))
+PMA_PreModelling_Train_LR_ET <- predict(Transform_Exponential, PMA_PreModelling_Train_LR.Numeric)
+PMA_PreModelling_Train_LR_ET$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_ET[,sapply(PMA_PreModelling_Train_LR_ET, is.numeric)],
+            y = PMA_PreModelling_Train_LR_ET$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_ET Train Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Train_LR_ET[,sapply(PMA_PreModelling_Train_LR_ET, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_ET$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_ET Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_ET$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_ET$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_ET_Tune <- train(x = PMA_PreModelling_Train_LR_ET[,!names(PMA_PreModelling_Train_LR_ET) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_ET$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_ET_Tune
+
+LR_ET_Tune$finalModel
+
+LR_ET_Tune$results
+
+(LR_ET_Train_ROCCurveAUC <- LR_ET_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_ET_VarImp <- varImp(LR_ET_Tune, scale = TRUE)
+plot(LR_ET_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_ET <- predict(Transform_Exponential, PMA_PreModelling_Test_LR.Numeric)
+PMA_PreModelling_Test_LR_ET$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_ET[,sapply(PMA_PreModelling_Test_LR_ET, is.numeric)],
+            y = PMA_PreModelling_Test_LR_ET$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_ET Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_ET[,sapply(PMA_PreModelling_Test_LR_ET, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_ET$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_ET Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_ET$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_ET_Test <- data.frame(LR_ET_Observed = PMA_PreModelling_Test_LR_ET$Log_Solubility_Class,
+                      LR_ET_Predicted = predict(LR_ET_Tune,
+                      PMA_PreModelling_Test_LR_ET[,!names(PMA_PreModelling_Test_LR_ET) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_ET_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_ET_Test_ROC <- roc(response = LR_ET_Test$LR_ET_Observed,
+             predictor = LR_ET_Test$LR_ET_Predicted.High,
+             levels = rev(levels(LR_ET_Test$LR_ET_Observed)))
+
+(LR_ET_Test_ROCCurveAUC <- auc(LR_ET_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.5 Logistic Regression With Inverse Hyperbolic Sine Transformation (LR_IHST)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Inverse Hyperbolic Sine Transformation](https://link.springer.com/article/10.1023/A:1012593022758) behaves similarly to a log transformation for positive values. The inverse hyperbolic since function however has the added advantage of remaining defined for zeroes and negative values.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with inverse hyperbolic sine transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.87107
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.87998
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.5, warning=FALSE, message=FALSE}
+##################################
+# Applying inverse hyperbolic sine function
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  PMA_PreModelling_Train[,i] <- log(PMA_PreModelling_Train[,i]+(((PMA_PreModelling_Train[,i])^2)+1)^(1/2))
+}
+
+for (i in 1:(ncol(PMA_PreModelling_Test)-1)){
+  PMA_PreModelling_Test[,i] <- log(PMA_PreModelling_Test[,i]+(((PMA_PreModelling_Test[,i])^2)+1)^(1/2))
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+PMA_PreModelling_Train_LR_IHST <- PMA_PreModelling_Train_LR
+PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_IHST[,sapply(PMA_PreModelling_Train_LR_IHST, is.numeric)],
+            y = PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_IHST Train Set : Numeric Predictor Distribution by Response Level")
+            
+featurePlot(x = PMA_PreModelling_Train_LR_IHST[,sapply(PMA_PreModelling_Train_LR_IHST, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_IHST Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_IHST_Tune <- train(x = PMA_PreModelling_Train_LR_IHST[,!names(PMA_PreModelling_Train_LR_IHST) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_IHST$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_IHST_Tune
+
+LR_IHST_Tune$finalModel
+
+LR_IHST_Tune$results
+
+(LR_IHST_Train_ROCCurveAUC <- LR_IHST_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_IHST_VarImp <- varImp(LR_IHST_Tune, scale = TRUE)
+plot(LR_IHST_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_IHST <- PMA_PreModelling_Test_LR
+PMA_PreModelling_Test_LR_IHST$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_IHST[,sapply(PMA_PreModelling_Test_LR_IHST, is.numeric)],
+            y = PMA_PreModelling_Test_LR_IHST$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_IHST Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_IHST[,sapply(PMA_PreModelling_Test_LR_IHST, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_IHST$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_IHST Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_IHST$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_IHST_Test <- data.frame(LR_IHST_Observed = PMA_PreModelling_Test_LR_IHST$Log_Solubility_Class,
+                      LR_IHST_Predicted = predict(LR_IHST_Tune,
+                      PMA_PreModelling_Test_LR_IHST[,!names(PMA_PreModelling_Test_LR_IHST) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_IHST_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_IHST_Test_ROC <- roc(response = LR_IHST_Test$LR_IHST_Observed,
+             predictor = LR_IHST_Test$LR_IHST_Predicted.High,
+             levels = rev(levels(LR_IHST_Test$LR_IHST_Observed)))
+
+(LR_IHST_Test_ROCCurveAUC <- auc(LR_IHST_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.6 Logistic Regression With Base-10 Logarithm Transformation (LR_LOG10T)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Base-10 Logarithm Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its logarithm function-applied form using a base equal to 10. As the logarithm of zero or any negative number is undefined, a constant must be added to move the minimum value of the distribution preferably to 1.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with base-10 logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.89192
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89882
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.6, warning=FALSE, message=FALSE}
+##################################
+# Applying numerical adjustments
+# to eliminate zero values and
+# base10-logarithm function
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  PMA_PreModelling_Train[,i] <- PMA_PreModelling_Train[,i] + 1
+  PMA_PreModelling_Train[,i] <- log10(PMA_PreModelling_Train[,i])
+}
+
+for (i in 1:(ncol(PMA_PreModelling_Test)-1)){
+  PMA_PreModelling_Test[,i] <- PMA_PreModelling_Test[,i] + 1
+  PMA_PreModelling_Test[,i] <- log10(PMA_PreModelling_Test[,i])
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+PMA_PreModelling_Train_LR_LOG10T <- PMA_PreModelling_Train_LR
+PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_LOG10T[,sapply(PMA_PreModelling_Train_LR_LOG10T, is.numeric)],
+            y = PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_LOG10T Train Set : Numeric Predictor Distribution by Response Level")
+            
+featurePlot(x = PMA_PreModelling_Train_LR_LOG10T[,sapply(PMA_PreModelling_Train_LR_LOG10T, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_LOG10T Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_LOG10T_Tune <- train(x = PMA_PreModelling_Train_LR_LOG10T[,!names(PMA_PreModelling_Train_LR_LOG10T) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_LOG10T$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_LOG10T_Tune
+
+LR_LOG10T_Tune$finalModel
+
+LR_LOG10T_Tune$results
+
+(LR_LOG10T_Train_ROCCurveAUC <- LR_LOG10T_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_LOG10T_VarImp <- varImp(LR_LOG10T_Tune, scale = TRUE)
+plot(LR_LOG10T_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_LOG10T <- PMA_PreModelling_Test_LR
+PMA_PreModelling_Test_LR_LOG10T$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_LOG10T[,sapply(PMA_PreModelling_Test_LR_LOG10T, is.numeric)],
+            y = PMA_PreModelling_Test_LR_LOG10T$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_LOG10T Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_LOG10T[,sapply(PMA_PreModelling_Test_LR_LOG10T, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_LOG10T$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_LOG10T Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_LOG10T$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_LOG10T_Test <- data.frame(LR_LOG10T_Observed = PMA_PreModelling_Test_LR_LOG10T$Log_Solubility_Class,
+                      LR_LOG10T_Predicted = predict(LR_LOG10T_Tune,
+                      PMA_PreModelling_Test_LR_LOG10T[,!names(PMA_PreModelling_Test_LR_LOG10T) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_LOG10T_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_LOG10T_Test_ROC <- roc(response = LR_LOG10T_Test$LR_LOG10T_Observed,
+             predictor = LR_LOG10T_Test$LR_LOG10T_Predicted.High,
+             levels = rev(levels(LR_LOG10T_Test$LR_LOG10T_Observed)))
+
+(LR_LOG10T_Test_ROCCurveAUC <- auc(LR_LOG10T_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.7 Logistic Regression With Natural Logarithm Transformation (LR_LNT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Natural Logarithm Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its natural logarithm function-applied form using a base equal to the constant e (2.7182818). As the logarithm of zero or any negative number is undefined, a constant must be added to move the minimum value of the distribution preferably to 1.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with natural logarithm transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.89192
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89882
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.7, warning=FALSE, message=FALSE}
+##################################
+# Applying numerical adjustments
+# to eliminate zero values and
+# natural logarithm function
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  PMA_PreModelling_Train[,i] <- PMA_PreModelling_Train[,i] + 1
+  PMA_PreModelling_Train[,i] <- log(PMA_PreModelling_Train[,i])
+}
+
+for (i in 1:(ncol(PMA_PreModelling_Test)-1)){
+  PMA_PreModelling_Test[,i] <- PMA_PreModelling_Test[,i] + 1
+  PMA_PreModelling_Test[,i] <- log(PMA_PreModelling_Test[,i])
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+PMA_PreModelling_Train_LR_LNT <- PMA_PreModelling_Train_LR
+PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_LNT[,sapply(PMA_PreModelling_Train_LR_LNT, is.numeric)],
+            y = PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_LNT Train Set : Numeric Predictor Distribution by Response Level")
+            
+featurePlot(x = PMA_PreModelling_Train_LR_LNT[,sapply(PMA_PreModelling_Train_LR_LNT, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_LNT Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_LNT_Tune <- train(x = PMA_PreModelling_Train_LR_LNT[,!names(PMA_PreModelling_Train_LR_LNT) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_LNT$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_LNT_Tune
+
+LR_LNT_Tune$finalModel
+
+LR_LNT_Tune$results
+
+(LR_LNT_Train_ROCCurveAUC <- LR_LNT_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_LNT_VarImp <- varImp(LR_LNT_Tune, scale = TRUE)
+plot(LR_LNT_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_LNT <- PMA_PreModelling_Test_LR
+PMA_PreModelling_Test_LR_LNT$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_LNT[,sapply(PMA_PreModelling_Test_LR_LNT, is.numeric)],
+            y = PMA_PreModelling_Test_LR_LNT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_LNT Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_LNT[,sapply(PMA_PreModelling_Test_LR_LNT, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_LNT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_LNT Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_LNT$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_LNT_Test <- data.frame(LR_LNT_Observed = PMA_PreModelling_Test_LR_LNT$Log_Solubility_Class,
+                      LR_LNT_Predicted = predict(LR_LNT_Tune,
+                      PMA_PreModelling_Test_LR_LNT[,!names(PMA_PreModelling_Test_LR_LNT) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_LNT_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_LNT_Test_ROC <- roc(response = LR_LNT_Test$LR_LNT_Observed,
+             predictor = LR_LNT_Test$LR_LNT_Predicted.High,
+             levels = rev(levels(LR_LNT_Test$LR_LNT_Observed)))
+
+(LR_LNT_Test_ROCCurveAUC <- auc(LR_LNT_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.8 Logistic Regression With Square Root Transformation (LR_SRT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Square Root Transformation](https://scholarworks.umass.edu/pare/vol8/iss1/6/) applies an algebraic transformation by substituting the variable by its square root function-applied form. While the function can be applied to zero values, square root of any negative number is undefined, a constant must be added to move the minimum value of the distribution preferably to 0.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with square root transformation applied to treat data skewness but no any treatment applied for data outliers. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.88441
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.89882
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.8, warning=FALSE, message=FALSE}
+##################################
+# Applying square root function
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  PMA_PreModelling_Train[,i] <- PMA_PreModelling_Train[,i] + 1
+  PMA_PreModelling_Train[,i] <- sqrt(PMA_PreModelling_Train[,i])
+}
+
+for (i in 1:(ncol(PMA_PreModelling_Test)-1)){
+  PMA_PreModelling_Test[,i] <- PMA_PreModelling_Test[,i] + 1
+  PMA_PreModelling_Test[,i] <- sqrt(PMA_PreModelling_Test[,i])
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+PMA_PreModelling_Train_LR_SRT <- PMA_PreModelling_Train_LR
+PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_SRT[,sapply(PMA_PreModelling_Train_LR_SRT, is.numeric)],
+            y = PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_SRT Train Set : Numeric Predictor Distribution by Response Level")
+            
+featurePlot(x = PMA_PreModelling_Train_LR_SRT[,sapply(PMA_PreModelling_Train_LR_SRT, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_SRT Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_SRT_Tune <- train(x = PMA_PreModelling_Train_LR_SRT[,!names(PMA_PreModelling_Train_LR_SRT) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_SRT$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_SRT_Tune
+
+LR_SRT_Tune$finalModel
+
+LR_SRT_Tune$results
+
+(LR_SRT_Train_ROCCurveAUC <- LR_SRT_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_SRT_VarImp <- varImp(LR_SRT_Tune, scale = TRUE)
+plot(LR_SRT_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_SRT <- PMA_PreModelling_Test_LR
+PMA_PreModelling_Test_LR_SRT$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_SRT[,sapply(PMA_PreModelling_Test_LR_SRT, is.numeric)],
+            y = PMA_PreModelling_Test_LR_SRT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_SRT Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_SRT[,sapply(PMA_PreModelling_Test_LR_SRT, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_SRT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_SRT Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_SRT$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_SRT_Test <- data.frame(LR_SRT_Observed = PMA_PreModelling_Test_LR_SRT$Log_Solubility_Class,
+                      LR_SRT_Predicted = predict(LR_SRT_Tune,
+                      PMA_PreModelling_Test_LR_SRT[,!names(PMA_PreModelling_Test_LR_SRT) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_SRT_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_SRT_Test_ROC <- roc(response = LR_SRT_Test$LR_SRT_Observed,
+             predictor = LR_SRT_Test$LR_SRT_Predicted.High,
+             levels = rev(levels(LR_SRT_Test$LR_SRT_Observed)))
+
+(LR_SRT_Test_ROCCurveAUC <- auc(LR_SRT_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.9 Logistic Regression With Outlier Winsorization Treatment (LR_WT)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Winsorization Treatment](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) replaces the extreme values of a data set in order to limit the effect of the outliers on the calculations or the results obtained by using such data. An iteration of such method is an 80% winsorization which replaces the top and bottom 10% data with the values at the 10th and 90th percentiles, respectively. The winsorization process results in a statistical measure of location that is closer to the bulk of the distribution.
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Winsorization transformation applied to treat data outliers but no any treatment applied for data skewness. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.87428
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.88916
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.9, warning=FALSE, message=FALSE}
+##################################
+# Applying winsorization function
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+for (i in 1:(ncol(PMA_PreModelling_Train)-1)){
+  Predictor_Percentile90 <- quantile(PMA_PreModelling_Train[,i], 0.90)
+  Predictor_Percentile10 <- quantile(PMA_PreModelling_Train[,i], 0.10)
+  Predictor_Percentile75 <- quantile(PMA_PreModelling_Train[,i], 0.75)
+  Predictor_Percentile25 <- quantile(PMA_PreModelling_Train[,i], 0.25)
+  Predictor_IQR <- Predictor_Percentile75-Predictor_Percentile25
+  Predictor_Outlier_UCL <- Predictor_Percentile75 + (1.5*Predictor_IQR)
+  Predictor_Outlier_LCL <- Predictor_Percentile25 - (1.5*Predictor_IQR)
+  PMA_PreModelling_Train[,i] <- ifelse(PMA_PreModelling_Train[,i]>Predictor_Outlier_UCL,Predictor_Percentile90,
+                                       ifelse(PMA_PreModelling_Train[,i]<Predictor_Outlier_LCL,Predictor_Percentile10,
+                                              PMA_PreModelling_Train[,i]))
+  PMA_PreModelling_Test[,i] <- ifelse(PMA_PreModelling_Test[,i]>Predictor_Outlier_UCL,Predictor_Percentile90,
+                                       ifelse(PMA_PreModelling_Test[,i]<Predictor_Outlier_LCL,Predictor_Percentile10,
+                                              PMA_PreModelling_Test[,i]))
+}
+
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+PMA_PreModelling_Train_LR_WT <- PMA_PreModelling_Train_LR
+PMA_PreModelling_Train_LR_WT$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_WT[,sapply(PMA_PreModelling_Train_LR_WT, is.numeric)],
+            y = PMA_PreModelling_Train_LR_WT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_WT Train Set : Numeric Predictor Distribution by Response Level")
+            
+featurePlot(x = PMA_PreModelling_Train_LR_WT[,sapply(PMA_PreModelling_Train_LR_WT, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_WT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_WT Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_WT$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_WT$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_WT_Tune <- train(x = PMA_PreModelling_Train_LR_WT[,!names(PMA_PreModelling_Train_LR_WT) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_WT$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_WT_Tune
+
+LR_WT_Tune$finalModel
+
+LR_WT_Tune$results
+
+(LR_WT_Train_ROCCurveAUC <- LR_WT_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_WT_VarImp <- varImp(LR_WT_Tune, scale = TRUE)
+plot(LR_WT_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_WT <- PMA_PreModelling_Test_LR
+PMA_PreModelling_Test_LR_WT$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_WT[,sapply(PMA_PreModelling_Test_LR_WT, is.numeric)],
+            y = PMA_PreModelling_Test_LR_WT$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_WT Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_WT[,sapply(PMA_PreModelling_Test_LR_WT, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_WT$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_WT Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_WT$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_WT_Test <- data.frame(LR_WT_Observed = PMA_PreModelling_Test_LR_WT$Log_Solubility_Class,
+                      LR_WT_Predicted = predict(LR_WT_Tune,
+                      PMA_PreModelling_Test_LR_WT[,!names(PMA_PreModelling_Test_LR_WT) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_WT_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_WT_Test_ROC <- roc(response = LR_WT_Test$LR_WT_Observed,
+             predictor = LR_WT_Test$LR_WT_Predicted.High,
+             levels = rev(levels(LR_WT_Test$LR_WT_Observed)))
+
+(LR_WT_Test_ROCCurveAUC <- auc(LR_WT_Test_ROC)[1])
+
+```
+
+</details>
+
+###  1.5.10 Logistic Regression With Outlier Spatial Sign Treatment (LR_SST)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| [Spatial Sign Treatment](https://pubs.acs.org/doi/10.1021/ci050498u) is a multivariate extension of the concept of sign. The method projects the centered and scaled variables onto a unit sphere and is related to global contrast normalization. Spatial signs, when used as multivariate estimators of covariance structures are more robust to outlying observations. 
+|
+| **[A]** The logistic regression model from the  <mark style="background-color: #CCECFF">**stats**</mark> package was implemented through the <mark style="background-color: #CCECFF">**caret**</mark> package with Spatial Sign treatment applied to treat data outliers but no any treatment applied for data skewness. 
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The cross-validated model performance of the final model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** AUROC = 0.86608
+|
+| **[D]** The model allows for ranking of predictors in terms of variable importance. The top-performing predictors in the model are as follows:
+|      **[D.1]** <span style="color: #FF0000">HydrophilicFactor</span> variable (numeric)
+|      **[D.2]** <span style="color: #FF0000">NumNonHAtoms</span> variable (numeric)
+|      **[D.3]** <span style="color: #FF0000">NumAtoms</span> variable (numeric)
+|
+| **[E]** The independent test model performance of the final model is summarized as follows:
+|      **[E.1]** AUROC = 0.88786
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.10, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train and test sets
+##################################
+PMA_PreModelling_Train <- Solubility_Train
+PMA_PreModelling_Test <- Solubility_Test
+
+PMA_PreModelling_Train_LR <- PMA_PreModelling_Train
+PMA_PreModelling_Test_LR <- PMA_PreModelling_Test
+
+PMA_PreModelling_Train_LR.Numeric <- PMA_PreModelling_Train_LR[,sapply(PMA_PreModelling_Train_LR, is.numeric)]
+PMA_PreModelling_Test_LR.Numeric <- PMA_PreModelling_Test_LR[,sapply(PMA_PreModelling_Test_LR, is.numeric)]
+
+##################################
+# Treating data skewness
+# for the train set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the train set
+##################################
+Transform_SpatialSign <- preProcess(PMA_PreModelling_Train_LR, method = c("spatialSign"))
+PMA_PreModelling_Train_LR_SST <- predict(Transform_SpatialSign, PMA_PreModelling_Train_LR.Numeric)
+PMA_PreModelling_Train_LR_SST$Log_Solubility_Class <- PMA_PreModelling_Train_LR$Log_Solubility_Class
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Train_LR_SST[,sapply(PMA_PreModelling_Train_LR_SST, is.numeric)],
+            y = PMA_PreModelling_Train_LR_SST$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_SST Train Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Train_LR_SST[,sapply(PMA_PreModelling_Train_LR_SST, is.numeric)], 
+            y = PMA_PreModelling_Train_LR_SST$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_SST Train Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Train_LR_SST$Log_Solubility_Class)))))
+
+##################################
+# Creating consistent fold assignments
+# for the 10-Fold Cross Validation process
+##################################
+set.seed(12345678)
+KFold_Indices <- createFolds(PMA_PreModelling_Train_LR_SST$Log_Solubility_Class,
+                             k = 10,
+                             returnTrain=TRUE)
+KFold_Control <- trainControl(method="cv",
+                              index=KFold_Indices,
+                              summaryFunction = twoClassSummary,
+                              classProbs = TRUE)
+
+##################################
+# Setting the conditions
+# for hyperparameter tuning
+##################################
+# No hyperparameter tuning process conducted
+# hyperparameter=intercept fixed to TRUE
+
+##################################
+# Running the logistic regression model
+# by setting the caret method to 'glm'
+##################################
+set.seed(12345678)
+LR_SST_Tune <- train(x = PMA_PreModelling_Train_LR_SST[,!names(PMA_PreModelling_Train_LR_SST) %in% c("Log_Solubility_Class")],
+                 y = PMA_PreModelling_Train_LR_SST$Log_Solubility_Class,
+                 method = "glm",
+                 metric = "ROC",
+                 trControl = KFold_Control)
+
+##################################
+# Reporting the cross-validation results
+# for the train set
+##################################
+LR_SST_Tune
+
+LR_SST_Tune$finalModel
+
+LR_SST_Tune$results
+
+(LR_SST_Train_ROCCurveAUC <- LR_SST_Tune$results$ROC)
+
+##################################
+# Identifying and plotting the
+# best model predictors
+##################################
+LR_SST_VarImp <- varImp(LR_SST_Tune, scale = TRUE)
+plot(LR_SST_VarImp,
+     top=4,
+     scales=list(y=list(cex = .95)),
+     main="Ranked Variable Importance : Logistic Regression",
+     xlab="Scaled Variable Importance Metrics",
+     ylab="Predictors",
+     cex=2,
+     origin=0,
+     alpha=0.45)
+
+##################################
+# Treating data skewness
+# for the test set
+##################################
+# No actions applied
+
+##################################
+# Treating data outliers
+# for the test set
+##################################
+PMA_PreModelling_Test_LR_SST <- predict(Transform_SpatialSign, PMA_PreModelling_Test_LR.Numeric)
+PMA_PreModelling_Test_LR_SST$Log_Solubility_Class <- PMA_PreModelling_Test_LR$Log_Solubility_Class
+
+##################################
+# Exploring the train set distribution
+# of the numeric predictors
+# with respect to the outcome
+##################################
+featurePlot(x = PMA_PreModelling_Test_LR_SST[,sapply(PMA_PreModelling_Test_LR_SST, is.numeric)],
+            y = PMA_PreModelling_Test_LR_SST$Log_Solubility_Class,
+            plot = "box",
+            scales = list(x = list(relation="free", rot = 90),
+                          y = list(relation="free")),
+            adjust = 1.5,
+            pch = "|", 
+            main = "LR_SST Test Set : Numeric Predictor Distribution by Response Level")
+
+featurePlot(x = PMA_PreModelling_Test_LR_SST[,sapply(PMA_PreModelling_Test_LR_SST, is.numeric)], 
+            y = PMA_PreModelling_Test_LR_SST$Log_Solubility_Class,
+            plot = "density",
+            scales = list(x = list(relation="free", rot = 90), 
+                          y = list(relation="free")),
+            adjust = 1.5, 
+            pch = "|", 
+            main = "LR_SST Test Set : Numeric Predictor Distribution by Response Level",
+            auto.key = list(columns = (length(levels(PMA_PreModelling_Test_LR_SST$Log_Solubility_Class)))))
+
+##################################
+# Independently evaluating the model
+# on the test set
+##################################
+LR_SST_Test <- data.frame(LR_SST_Observed = PMA_PreModelling_Test_LR_SST$Log_Solubility_Class,
+                      LR_SST_Predicted = predict(LR_SST_Tune,
+                      PMA_PreModelling_Test_LR_SST[,!names(PMA_PreModelling_Test_LR_SST) %in% c("Log_Solubility_Class")],
+                      type = "prob"))
+
+LR_SST_Test
+
+##################################
+# Reporting the independent evaluation results
+# for the test set
+##################################
+LR_SST_Test_ROC <- roc(response = LR_SST_Test$LR_SST_Observed,
+             predictor = LR_SST_Test$LR_SST_Predicted.High,
+             levels = rev(levels(LR_SST_Test$LR_SST_Observed)))
+
+(LR_SST_Test_ROCCurveAUC <- auc(LR_SST_Test_ROC)[1])
+
+```
+
+</details>
+
+##  1.6 Consolidated Findings
+|
+| **[A]** The transformation for skewed data generally performed better for models which are sensitive to deviations against the normality assumption (i.e. logistic regression) as compared to treatment for extreme outliers. 
+|      **[A.1]** **LR: Logistic Regression** (<mark style="background-color: #CCECFF">**stats**</mark> package)
+|             **[A.1.1]** **LR_REF (Without Skewness and Outlier Treatment)**:
+|                      **[A.1.1.1]** Cross-Validation AUROC = 0.87475
+|                      **[A.1.1.2]** Test AUROC = 0.88447 
+|             **[A.1.2]** **LR_BCT (With Box-Cox Transformation)**:
+|                      **[A.1.2.1]** Cross-Validation AUROC = 0.88878
+|                      **[A.1.2.2]** Test AUROC = 0.89676
+|             **[A.1.3]** **LR_YJT (With Yeo-Johnson Transformation)**: 
+|                      **[A.1.3.1]** Cross-Validation AUROC = 0.88070
+|                      **[A.1.3.2]** Test AUROC = 0.89061
+|             **[A.1.4]** **LR_ET (With Exponential Transformation)**: 
+|                      **[A.1.4.1]** Cross-Validation AUROC = 0.88053
+|                      **[A.1.4.2]** Test AUROC = 0.89013
+|             **[A.1.5]** **LR_IHST (With Inverse Hyperbolic Sine Transformation)**: 
+|                      **[A.1.5.1]** Cross-Validation AUROC = 0.87107
+|                      **[A.1.5.2]** Test AUROC = 0.87998
+|             **[A.1.6]** **LR_LOG10T (With Base-10 Logarithm Transformation)**:
+|                      **[A.1.6.1]** Cross-Validation AUROC = 0.89192
+|                      **[A.1.6.2]** Test AUROC = 0.89882
+|             **[A.1.7]** **LR_LNT (With Natural Logarithm Transformation)**:
+|                      **[A.1.7.1]** Cross-Validation AUROC = 0.89192
+|                      **[A.1.7.2]** Test AUROC = 0.89882
+|             **[A.1.8]** **LR_SRT (With Square Root Transformation)**:  
+|                      **[A.1.8.1]** Cross-Validation AUROC = 0.88441
+|                      **[A.1.8.2]** Test AUROC = 0.89461
+|             **[A.1.9]** **LR_WT (With Outlier Winsorization Treatment)**: 
+|                      **[A.1.9.1]** Cross-Validation AUROC = 0.87428
+|                      **[A.1.9.2]** Test AUROC = 0.88916
+|             **[A.1.10]** **LR_SST (With Outlier Spatial Sign Treatment)**: 
+|                      **[A.1.10.1]** Cross-Validation AUROC = 0.86608
+|                      **[A.1.10.2]** Test AUROC = 0.88786
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.16, warning=FALSE, message=FALSE}
+##################################
+# Consolidating all evaluation results
+# for the train and test sets
+# using the AUROC metric
+##################################
+Model <- c('LR_REF','LR_BCT','LR_YJT','LR_ET','LR_IHST','LR_LOG10T','LR_LNT','LR_SRT','LR_WT','LR_SST',
+           'LR_REF','LR_BCT','LR_YJT','LR_ET','LR_IHST','LR_LOG10T','LR_LNT','LR_SRT','LR_WT','LR_SST')
+
+Set <- c(rep('Cross-Validation',10),rep('Test',10))
+
+ROCCurveAUC <- c(LR_Train_ROCCurveAUC,LR_BCT_Train_ROCCurveAUC,
+                 LR_YJT_Train_ROCCurveAUC,LR_ET_Train_ROCCurveAUC,
+                 LR_IHST_Train_ROCCurveAUC,LR_LOG10T_Train_ROCCurveAUC,
+                 LR_LNT_Train_ROCCurveAUC,LR_SRT_Train_ROCCurveAUC,
+                 LR_WT_Train_ROCCurveAUC,LR_SST_Train_ROCCurveAUC,
+                 LR_Test_ROCCurveAUC,LR_BCT_Test_ROCCurveAUC,
+                 LR_YJT_Test_ROCCurveAUC,LR_ET_Test_ROCCurveAUC,
+                 LR_IHST_Test_ROCCurveAUC,LR_LOG10T_Test_ROCCurveAUC,
+                 LR_LNT_Test_ROCCurveAUC,LR_SRT_Test_ROCCurveAUC,
+                 LR_WT_Test_ROCCurveAUC,LR_SST_Test_ROCCurveAUC)
+
+ROCCurveAUC_Summary <- as.data.frame(cbind(Model,Set,ROCCurveAUC))
+
+ROCCurveAUC_Summary$ROCCurveAUC <- as.numeric(as.character(ROCCurveAUC_Summary$ROCCurveAUC))
+ROCCurveAUC_Summary$Set <- factor(ROCCurveAUC_Summary$Set,
+                                        levels = c("Cross-Validation",
+                                                   "Test"))
+ROCCurveAUC_Summary$Model <- factor(ROCCurveAUC_Summary$Model,
+                                        levels = c('LR_REF',
+                                                   'LR_BCT',
+                                                   'LR_YJT',
+                                                   'LR_ET',
+                                                   'LR_IHST',
+                                                   'LR_LOG10T',
+                                                   'LR_LNT',
+                                                   'LR_SRT',
+                                                   'LR_WT',
+                                                   'LR_SST'))
+
+print(ROCCurveAUC_Summary, row.names=FALSE)
+
+(ROCCurveAUC_Plot <- dotplot(Model ~ ROCCurveAUC,
+                           data = ROCCurveAUC_Summary,
+                           groups = Set,
+                           main = "Classification Model Performance Comparison",
+                           ylab = "Model",
+                           xlab = "AUROC",
+                           auto.key = list(adj = 1),
+                           type=c("p", "h"),
+                           origin = 0,
+                           alpha = 0.45,
+                           pch = 16,
+                           cex = 2))
+
+```
+
+</details>
+|
+# **2. Summary** <a name="summary"></a>
+|
+| ![](D:/Github_Codes/ProjectPortfolio/Portfolio_Project_20/docs/Project20_Summary.png)
+|
+# **3. References**
+|
+| **[Book]** [Applied Predictive Modeling](http://appliedpredictivemodeling.com/) by Max Kuhn and Kjell Johnson
+| **[Book]** [An Introduction to Statistical Learning](https://www.statlearning.com/) by Gareth James, Daniela Witten, Trevor Hastie and Rob Tibshirani
+| **[Book]** [Multivariate Data Visualization with R](http://lmdvr.r-forge.r-project.org/figures/figures.html) by Deepayan Sarkar
+| **[Book]** [Machine Learning](https://bookdown.org/ssjackson300/Machine-Learning-Lecture-Notes/) by Samuel Jackson
+| **[Book]** [Data Modeling Methods](https://bookdown.org/larget_jacob/data-modeling-methods/) by Jacob Larget
+| **[Book]** [Introduction to R and Statistics](https://saestatsteaching.tech/) by University of Western Australia
+| **[Book]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
+| **[Book]** [Introduction to Research Methods](https://bookdown.org/ejvanholm/Textbook/) by Eric van Holm
+| **[R Package]** [AppliedPredictiveModeling](https://cran.r-project.org/web//packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf) by Max Kuhn
+| **[R Package]** [caret](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[R Package]** [rpart](https://mran.microsoft.com/web/packages/rpart/rpart.pdf) by Terry Therneau and Beth Atkinson
+| **[R Package]** [lattice](https://cran.r-project.org/web/packages/lattice/lattice.pdf) by  Deepayan Sarkar
+| **[R Package]** [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html/) by Hadley Wickham
+| **[R Package]** [moments](https://cran.r-project.org/web/packages/moments/index.html) by Lukasz Komsta and Frederick
+| **[R Package]** [skimr](https://cran.r-project.org/web/packages/skimr/skimr.pdf) by  Elin Waring
+| **[R Package]** [RANN](https://cran.r-project.org/web/packages/RANN/RANN.pdf) by  Sunil Arya, David Mount, Samuel Kemp and Gregory Jefferis
+| **[R Package]** [corrplot](https://cran.r-project.org/web/packages/corrplot/corrplot.pdf) by Taiyun Wei
+| **[R Package]** [tidyverse](https://cran.r-project.org/web/packages/tidyverse/tidyverse.pdf) by Hadley Wickham
+| **[R Package]** [lares](https://cran.rstudio.com/web/packages/lares/lares.pdf) by Bernardo Lares
+| **[R Package]** [DMwR](https://mran.microsoft.com/snapshot/2016-05-02/web/packages/DMwR/DMwR.pdf) by Luis Torgo
+| **[R Package]** [gridExtra](https://cran.r-project.org/web/packages/gridExtra/gridExtra.pdf) by Baptiste Auguie and Anton Antonov
+| **[R Package]** [rattle](https://cran.r-project.org/web/packages/rattle/rattle.pdf) by Graham Williams
+| **[R Package]** [rpart.plot](https://cran.r-project.org/web/packages/rpart.plot/rpart.plot.pdf) by Stephen Milborrow
+| **[R Package]** [RColorBrewer](https://cran.r-project.org/web//packages/RColorBrewer/RColorBrewer.pdf) by Erich Neuwirth
+| **[R Package]** [stats](https://search.r-project.org/R/refmans/stats/html/00Index.html) by R Core Team
+| **[R Package]** [pls](https://cran.r-project.org/web/packages/pls/pls.pdf) by Kristian Hovde Liland
+| **[R Package]** [nnet](https://cran.r-project.org/web/packages/nnet/nnet.pdf) by Brian Ripley
+| **[R Package]** [elasticnet](https://cran.r-project.org/web/packages/elasticnet/elasticnet.pdf) by Hui Zou
+| **[R Package]** [earth](https://cran.r-project.org/web/packages/earth/earth.pdf) by Stephen Milborrow
+| **[R Package]** [party](https://cran.r-project.org/web/packages/party/party.pdf) by Torsten Hothorn
+| **[R Package]** [kernlab](https://cran.r-project.org/web/packages/kernlab/kernlab.pdf) by Alexandros Karatzoglou
+| **[R Package]** [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf) by Andy Liaw
+| **[R Package]** [pROC](https://cran.r-project.org/web/packages/pROC/pROC.pdf) by Xavier Robin
+| **[R Package]** [mda](https://cran.r-project.org/web/packages/mda/mda.pdf) by Trevor Hastie
+| **[R Package]** [klaR](https://cran.r-project.org/web/packages/klaR/klaR.pdf) by Christian Roever, Nils Raabe, Karsten Luebke, Uwe Ligges, Gero Szepannek, Marc Zentgraf and David Meyer
+| **[R Package]** [pamr](https://cran.r-project.org/web/packages/pamr/pamr.pdf) by Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan and Gil Chu
+| **[Article]** [The caret Package](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[Article]** [A Short Introduction to the caret Package](https://cran.r-project.org/web/packages/caret/vignettes/caret.html) by Max Kuhn
+| **[Article]** [Caret Package – A Practical Guide to Machine Learning in R](https://www.machinelearningplus.com/machine-learning/caret-package/#:~:text=Caret%20is%20short%20for%20Classification%20And%20REgression%20Training.,track%20of%20which%20algorithm%20resides%20in%20which%20package.) by Selva Prabhakaran
+| **[Article]** [Tuning Machine Learning Models Using the Caret R Package](https://machinelearningmastery.com/tuning-machine-learning-models-using-the-caret-r-package/) by Jason Brownlee
+| **[Article]** [Lattice Graphs](http://www.sthda.com/english/wiki/lattice-graphs) by Alboukadel Kassambara
+| **[Article]** [A Tour of Machine Learning Algorithms](https://machinelearningmastery.com/a-tour-of-machine-learning-algorithms/) by Jason Brownlee
+| **[Article]** [4 Types of Classification Tasks in Machine Learning](https://machinelearningmastery.com/types-of-classification-in-machine-learning/) by Jason Brownlee
+| **[Article]** [Transforming Skewed Data: How to Choose the Right Transformation for your Distribution](https://anatomisebiostats.com/biostatistics-blog/transforming-skewed-data/) by Anatomise Biostats Team
+| **[Article]** [Handling Outlying Or Skewed Data With Robust Regression](https://scientificallysound.org/2021/06/29/handling-outlying-or-skewed-data-with-robust-regression/) by Joanna Diong
+| **[Article]** [What’s Wrong With Your Statistical Model? Skewed Data.](https://builtin.com/data-science/skewed-data) by Rajat Sharma
+| **[Article]** [Winsorize: Definition, Examples in Easy Steps](https://www.statisticshowto.com/winsorize/) by Statistics How To Team
+| **[Article]** [Winsorization: The Good, The Bad, and The Ugly](https://blogs.sas.com/content/iml/2017/02/08/winsorization-good-bad-and-ugly.html) by Rick Wicklin
+| **[Article]** [5 Variable Transformations to Improve Your Regression Model](https://quantifyinghealth.com/variable-transformations-in-regression/) by George Choueiry
+| **[Article]** [What is a Yeo-Johnson Power Transformation?](https://readysignal.com/what-is-a-yeo-johnson-power-transformation/) by Ready Signal Team
+| **[Article]** [Box-Cox Transformation in Excel (Step-by-Step)](https://www.statology.org/box-cox-transformation-excel/) by Statology Team
+| **[Article]** [Box-Cox Transformation](https://www.spcforexcel.com/knowledge/basic-statistics/box-cox-transformation) by SPC For Excel Team
+| **[Article]** [Box-Cox Transformation](https://encyclopediaofmath.org/wiki/Box-Cox_transformation) by Encyclopedia of Math Team
+| **[Article]** [The Box-Cox Transformation: What It Is and How to Use It](https://leanscape.io/the-box-cox-transformation-what-it-is-and-how-to-use-it/) by Leanscape Team
+| **[Article]** [Inverse Hyperbolic Sine](https://mathworld.wolfram.com/InverseHyperbolicSine.html) by Wolfram Mathworld Team
+| **[Article]** [Spot-Check Classification Machine Learning Algorithms in Python with scikit-learn](https://machinelearningmastery.com/spot-check-classification-machine-learning-algorithms-python-scikit-learn/) by Jason Brownlee
+| **[Article]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
+| **[Article]** [Generalized Linear Model](https://support.bccvl.org.au/support/solutions/articles/6000083213-generalized-linear-model) by BCCVL Team
+| **[Article]** [Transformations: An Introduction](http://fmwww.bc.edu/repec/bocode/t/transint.html) by Boston College
+| **[Publication]** [The Origins of Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) by JS Cramer (Econometrics eJournal)
+| **[Publication]** [An Analysis of Transformations](https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1964.tb00553.x) by George Box and David Cox (Journal of the Royal Statistical Society)
+| **[Publication]** [A New Family of Power Transformations to Improve Normality or Symmetry](https://academic.oup.com/biomet/article-abstract/87/4/954/232908?redirectedFrom=fulltext) by In-Kwon Yeo and Richard Johnson (Biometrika)
+| **[Publication]** [Spatial Sign Preprocessing: A Simple Way To Impart Moderate Robustness to Multivariate Estimators](https://pubs.acs.org/doi/10.1021/ci050498u) by Sven Serneels, Evert De Nolf and Pierre Van Espen (Journal of Chemical Information and Modeling)
+| **[Publication]** [Exponential Data Transformations](https://rss.onlinelibrary.wiley.com/doi/abs/10.2307/2988129) by B Manly (Journal of the Royal Statistical Society)
+| **[Publication]** [Notes on the Use of Data Transformations](https://scholarworks.umass.edu/pare/vol8/iss1/6/) by Jason Osborne (Practical Assessment, Research, and Evaluation)
+| **[Publication]** [Winsorization for Identifying and Treating Outliers in Business Surveys](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Ray Chambers, Philip Kokic, Paul Smith and Marie Cruddas (Proceedings in the Second International Conference on Establishment Survey)
+| **[Publication]** [The Inverse Hyperbolic Sine Transformation and Retransformed Marginal Effects](https://www.researchgate.net/publication/307632859_Winsorization_for_Identifying_and_Treating_Outliers_in_Business_Surveys) by Edward Norton (National Bureau of Economic Research)
+| **[Publication]** [An Application of the Inverse Hyperbolic Sine Transformation — A Note](https://link.springer.com/article/10.1023/A:1012593022758) by Mingliang Zhang, John Fortney, John Tilford and Kathryn Rost (Health Services and Outcomes Research Methodology)
+| **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
+| **[Course]** [Regression Methods](https://online.stat.psu.edu/stat501/) by Penn State Eberly College of Science
+| **[Course]** [Applied Regression Analysis](https://online.stat.psu.edu/stat462/) by Penn State Eberly College of Science
+|
+|
+|
+|
